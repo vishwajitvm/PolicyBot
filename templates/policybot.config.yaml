@@ -1,0 +1,34 @@
+app:
+  name: PolicyBot Intelligence
+  env: development
+
+rag:
+  chunk_size_tokens: 700
+  chunk_overlap_tokens: 120
+  top_k_initial: 30
+  rerank_top_k: 8
+  answer_temperature: 0.2
+
+freshness:
+  use_effective_date: true
+  use_version: true
+  use_modified_date: true
+  conflict_threshold_days: 90
+  weights:
+    effective_date: 0.35
+    version: 0.25
+    modified_date: 0.20
+    created_date: 0.10
+    admin_current: 0.10
+
+providers:
+  llm:
+    provider: gemini
+    model: gemini-2.5-flash
+  embedding:
+    provider: gemini
+    model: gemini-embedding-001
+    dimension: 768
+  vector_db:
+    provider: qdrant
+    collection: policybot_chunks

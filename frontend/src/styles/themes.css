@@ -1,0 +1,19 @@
+:root {
+  --surface: 9 13 18;
+  --panel: 16 22 29;
+  --border: 39 50 61;
+  --text: 237 242 247;
+  --muted: 145 158 171;
+  --primary: 39 197 165;
+}
+
+:root[data-gradient="true"] body {
+  background:
+    linear-gradient(135deg, rgb(var(--surface)), rgba(var(--primary), 0.16)),
+    rgb(var(--surface));
+}
+
+::selection {
+  background: rgb(var(--primary));
+  color: white;
+}

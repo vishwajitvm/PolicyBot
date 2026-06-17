@@ -1,0 +1,20 @@
+SUPPORTED_EXTENSIONS = {".txt", ".md", ".pdf", ".docx", ".csv"}
+TRACE_STEPS = [
+    "query_received",
+    "query_normalized",
+    "intent_classified",
+    "query_variants_generated",
+    "query_embedded",
+    "vector_candidates_retrieved",
+    "keyword_candidates_retrieved",
+    "candidates_merged",
+    "candidates_reranked",
+    "freshness_resolved",
+    "context_graded",
+    "prompt_built",
+    "answer_generated",
+    "citations_validated",
+    "confidence_scored",
+    "trace_persisted",
+    "response_returned",
+]

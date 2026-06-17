@@ -1,0 +1,43 @@
+{
+  "trace_id": "trace_001",
+  "question": "What is the latest maternity leave policy?",
+  "events": [
+    {
+      "step_name": "question_received",
+      "status": "success",
+      "message": "Question received"
+    },
+    {
+      "step_name": "query_rewritten",
+      "status": "success",
+      "message": "Rewritten query created"
+    },
+    {
+      "step_name": "vector_search_completed",
+      "status": "success",
+      "message": "Retrieved 30 candidate chunks from Qdrant"
+    },
+    {
+      "step_name": "freshness_resolved",
+      "status": "warning",
+      "message": "Selected latest policy and detected one older conflicting document"
+    },
+    {
+      "step_name": "answer_generated",
+      "status": "success",
+      "message": "Answer generated with citations"
+    },
+    {
+      "step_name": "scores_calculated",
+      "status": "success",
+      "message": "Confidence score calculated"
+    }
+  ],
+  "scores": {
+    "retrieval_relevance": 0.89,
+    "answer_confidence": 0.84,
+    "citation_coverage": 0.92,
+    "freshness_confidence": 0.95,
+    "conflict_risk": 0.21
+  }
+}

@@ -8,8 +8,9 @@ class Settings(BaseSettings):
     app_name: str = "PolicyBot Intelligence"
     app_env: str = "local"
     api_prefix: str = "/api/v1"
-    backend_cors_origins: list[str] = Field(
-        default_factory=lambda: ["http://localhost:5173", "http://localhost:3000"]
+    backend_cors_origins_str: str = Field(
+        default="http://localhost:5173,http://localhost:3000,http://localhost:8080,http://127.0.0.1:5173,http://127.0.0.1:3000,http://127.0.0.1:8080",
+        alias="BACKEND_CORS_ORIGINS",
     )
 
     mongodb_uri: str = "mongodb://mongodb:27017"
@@ -58,12 +59,9 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
-    @field_validator("backend_cors_origins", mode="before")
-    @classmethod
-    def parse_origins(cls, value: str | list[str]) -> list[str]:
-        if isinstance(value, str):
-            return [origin.strip() for origin in value.split(",") if origin.strip()]
-        return value
+    @property
+    def backend_cors_origins(self) -> list[str]:
+        return [origin.strip() for origin in self.backend_cors_origins_str.split(",") if origin.strip()]
 
 
 @lru_cache

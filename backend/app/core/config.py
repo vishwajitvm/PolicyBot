@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     vector_db_provider: str = "qdrant"
     qdrant_url: str = "http://qdrant:6333"
     qdrant_collection: str = "policybot_chunks"
-    qdrant_vector_size: int = 768
+    qdrant_vector_size: int = 3072
 
     llm_provider: str = "gemini"
     embedding_provider: str = "gemini"

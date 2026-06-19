@@ -6,7 +6,7 @@ import { IngestionJobStatus } from "./IngestionJobStatus";
 import { IngestionLogPanel } from "./IngestionLogPanel";
 
 export function IngestionPageFeature() {
-  const { data = [] } = useQuery({ queryKey: ["ingestion-jobs"], queryFn: listIngestionJobs, retry: false });
+  const { data = [] } = useQuery({ queryKey: ["ingestion-jobs"], queryFn: listIngestionJobs, retry: false, refetchInterval: 5000 });
   const latest = data[0];
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_380px]">

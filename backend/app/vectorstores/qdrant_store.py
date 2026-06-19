@@ -123,8 +123,6 @@ class QdrantVectorStore(BaseVectorStore):
                                 # Retry the operation
                                 await self._load_client().upsert(self.settings.qdrant_collection, points=points)
                                 return
-                            else:
-                                logger.warning("Could not determine actual vector dimension from chunks")
                 except Exception as recover_exc:
                     logger.warning(f"Failed to auto-recover from vector dimension mismatch: {recover_exc}")
             # If we couldn't recover, raise an informative error
@@ -166,13 +164,14 @@ class QdrantVectorStore(BaseVectorStore):
                 ]
             )
         try:
-            points = await self._load_client().search(
+            query_result = await self._load_client().query_points(
                 collection_name=self.settings.qdrant_collection,
-                query_vector=query_vector,
+                query=query_vector,
                 query_filter=q_filter,
                 limit=limit,
                 with_payload=True,
             )
+            points = query_result.points
         except httpx.HTTPStatusError as exc:
             if exc.response.status_code == 400:
                 try:
@@ -216,13 +215,14 @@ class QdrantVectorStore(BaseVectorStore):
                                 ),
                             )
                             # Retry the operation
-                            points = await self._load_client().search(
+                            query_result = await self._load_client().query_points(
                                 collection_name=self.settings.qdrant_collection,
-                                query_vector=query_vector,
+                                query=query_vector,
                                 query_filter=q_filter,
                                 limit=limit,
                                 with_payload=True,
                             )
+                            points = query_result.points
                             return [
                                 VectorSearchResult(
                                     chunk_id=point.payload.get("chunk_id", ""),

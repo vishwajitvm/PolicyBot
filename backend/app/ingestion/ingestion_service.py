@@ -44,6 +44,11 @@ class IngestionService:
         self.metadata = MetadataExtractor()
         self.chunker = ChunkingService(settings.chunk_size, settings.chunk_overlap)
         self.job_service = IngestionJobService()
+        # Log what embedding provider is being used for diagnostics
+        logger.info(
+            f"IngestionService initialized with embedding provider: {type(embedding_provider).__name__} "
+            f"and vector store: {type(vector_store).__name__}"
+        )
 
     async def run_for_source(self, source_id: str) -> dict:
         job = None

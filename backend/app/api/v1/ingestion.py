@@ -40,9 +40,17 @@ async def create_job(payload: IngestionJobCreate, request: Request) -> ApiRespon
 
 @router.get("/jobs", response_model=ApiResponse)
 async def list_jobs() -> ApiResponse:
-    return ApiResponse(data=await IngestionJobRepository(mongodb.db()).find_many())
+    try:
+        return ApiResponse(data=await IngestionJobRepository(mongodb.db()).find_many(), message="Jobs retrieved")
+    except Exception as exc:
+        logger.exception("Failed to list ingestion jobs")
+        return ApiResponse(success=False, message=str(exc))
 
 
 @router.get("/jobs/{job_id}", response_model=ApiResponse)
 async def get_job(job_id: str) -> ApiResponse:
-    return ApiResponse(data=await IngestionJobRepository(mongodb.db()).get(job_id))
+    try:
+        return ApiResponse(data=await IngestionJobRepository(mongodb.db()).get(job_id), message="Job retrieved")
+    except Exception as exc:
+        logger.exception("Failed to get ingestion job")
+        return ApiResponse(success=False, message=str(exc))

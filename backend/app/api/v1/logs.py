@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 
 from fastapi import APIRouter, Request
@@ -6,6 +7,7 @@ from fastapi.responses import HTMLResponse
 from app.observability.log_store import LogStore
 from app.schemas.common import ApiResponse
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/logs")
 
 
@@ -18,13 +20,21 @@ async def list_logs(
     search: str | None = None,
     limit: int = 500,
 ) -> ApiResponse:
-    store = LogStore(request.app.state.settings.log_file_path)
-    return ApiResponse(data={"items": store.list_logs(level, start_date, end_date, search, limit), "stats": store.stats()})
+    try:
+        store = LogStore(request.app.state.settings.log_file_path)
+        return ApiResponse(
+            data={"items": store.list_logs(level, start_date, end_date, search, limit), "stats": store.stats()},
+            message="Logs retrieved"
+        )
+    except Exception as exc:
+        logger.exception("Failed to list logs")
+        return ApiResponse(success=False, message=str(exc))
 
 
 @router.get("/ui", response_class=HTMLResponse)
 async def logs_ui() -> str:
-    return """
+    try:
+        return """
 <!doctype html>
 <html>
 <head>
@@ -77,6 +87,22 @@ async def logs_ui() -> str:
     loadLogs();
     setInterval(loadLogs, 10000);
   </script>
+</body>
+</html>
+"""
+    except Exception as exc:
+        logger.exception("Failed to serve logs UI")
+        # In case of error, we still return an HTML response with an error message?
+        # But the return type is HTMLResponse, so we must return a string.
+        return f"""
+<!doctype html>
+<html>
+<head>
+  <title>Error</title>
+</head>
+<body>
+  <h1>Error loading logs UI</h1>
+  <p>{exc}</p>
 </body>
 </html>
 """

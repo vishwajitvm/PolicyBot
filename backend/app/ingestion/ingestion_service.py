@@ -72,44 +72,45 @@ class IngestionService:
                     try:
                         content_hash = await self.hasher.file_hash(item.path)
                         existing = await self.documents.find_by_path(source_id, str(item.path))
-                        if existing and existing.get("content_hash") == content_hash:
-                            skipped += 1
-                            logs.append(f"Skipped unchanged file: {item.path.name}")
-                        else:
-                            text = await self.loader.load_text(item.path)
-                            chunks = self.chunker.split(text)
-                            metadata = self.metadata.extract(item.path, source, content_hash)
-                            version = int(existing.get("version", 0)) + 1 if existing else 1
-                            metadata["version"] = version
-                            document_id = existing["document_id"] if existing else str(uuid4())
-                            document = Document(document_id=document_id, **metadata).model_dump()
-                            await self.documents.upsert_one({"document_id": document_id}, document)
-                            await self.versions.insert_one({**document, "document_version_id": str(uuid4())})
-                            vectors = await self.embedding_provider.embed_texts([chunk.text for chunk in chunks])
-                            vector_chunks: list[VectorChunk] = []
-                            for chunk, vector in zip(chunks, vectors, strict=False):
-                                chunk_id = str(uuid4())
-                                chunk_doc = {
-                                    "chunk_id": chunk_id,
-                                    "document_id": document_id,
-                                    "source_id": source_id,
-                                    "text": chunk.text,
-                                    "index": chunk.index,
-                                    "metadata": {**metadata, "chunk_index": chunk.index},
-                                }
-                                await self.chunks.upsert_one({"chunk_id": chunk_id}, chunk_doc)
-                                vector_chunks.append(
-                                    VectorChunk(
-                                        chunk_id=chunk_id,
-                                        document_id=document_id,
-                                        source_id=source_id,
-                                        text=chunk.text,
-                                        vector=vector,
-                                        payload=chunk_doc["metadata"],
-                                    )
+                        text = await self.loader.load_text(item.path)
+                        chunks = self.chunker.split(text)
+                        metadata = self.metadata.extract(item.path, source, content_hash)
+                        version = int(existing.get("version", 0)) + 1 if existing else 1
+                        metadata["version"] = version
+                        document_id = existing["document_id"] if existing else str(uuid4())
+                        document = Document(document_id=document_id, **metadata).model_dump()
+                        await self.documents.upsert_one({"document_id": document_id}, document)
+                        await self.versions.insert_one({**document, "document_version_id": str(uuid4())})
+                        vectors = await self.embedding_provider.embed_texts([chunk.text for chunk in chunks])
+                        vector_chunks: list[VectorChunk] = []
+                        for chunk, vector in zip(chunks, vectors, strict=False):
+                            chunk_id = str(uuid4())
+                            chunk_doc = {
+                                "chunk_id": chunk_id,
+                                "document_id": document_id,
+                                "source_id": source_id,
+                                "text": chunk.text,
+                                "index": chunk.index,
+                                "metadata": {**metadata, "chunk_index": chunk.index},
+                            }
+                            await self.chunks.upsert_one({"chunk_id": chunk_id}, chunk_doc)
+                            vector_chunks.append(
+                                VectorChunk(
+                                    chunk_id=chunk_id,
+                                    document_id=document_id,
+                                    source_id=source_id,
+                                    text=chunk.text,
+                                    vector=vector,
+                                    payload=chunk_doc["metadata"],
                                 )
-                            await self.vector_store.upsert_chunks(vector_chunks)
-                            processed += 1
+                            )
+                        await self.vector_store.upsert_chunks(vector_chunks)
+                        processed += 1
+                        unchanged = existing and existing.get("content_hash") == content_hash
+                        if unchanged:
+                            logs.append(f"Skipped unchanged file: {item.path.name} (ensuring vectors)")
+                            skipped += 1
+                        else:
                             logs.append(f"Indexed {item.path.name} with {len(chunks)} chunks")
                     except Exception as exc:
                         logger.exception("Failed to ingest %s", item.path)

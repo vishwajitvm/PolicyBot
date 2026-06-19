@@ -18,6 +18,7 @@ services:
       - "8000:8000"
     volumes:
       - backend_logs:/app/logs
+      - C:/Users/vishw/Downloads/policybot_test_dataset:/app/data/policies
     depends_on:
       - qdrant
 

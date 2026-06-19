@@ -21,8 +21,8 @@ class Settings(BaseSettings):
     qdrant_collection: str = "policybot_chunks"
     qdrant_vector_size: int = 768
 
-    llm_provider: str = "gemini"
-    embedding_provider: str = "gemini"
+    llm_provider: str = "ollama"
+    embedding_provider: str = "ollama"
     gemini_api_key: str = ""
     gemini_chat_model: str = "gemini-1.5-flash"
     gemini_embedding_model: str = "text-embedding-004"
@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     openai_embedding_model: str = ""
     anthropic_api_key: str = ""
     anthropic_chat_model: str = ""
-    ollama_base_url: str = "http://localhost:11434"
+    ollama_base_url: str = "http://host.docker.internal:11434"
     ollama_chat_model: str = "llama3.1"
     ollama_embedding_model: str = "nomic-embed-text"
 

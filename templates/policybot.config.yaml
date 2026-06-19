@@ -26,8 +26,8 @@ providers:
     provider: gemini
     model: gemini-2.5-flash
   embedding:
-    provider: gemini
-    model: gemini-embedding-001
+    provider: ollama
+    model: nomic-embed-text
     dimension: 768
   vector_db:
     provider: qdrant

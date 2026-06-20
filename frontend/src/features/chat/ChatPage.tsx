@@ -251,7 +251,7 @@ export function ChatPageFeature() {
             setCurrentSessionId(session.id);
             sendMessageMutation.mutate({
               sessionId: session.id,
-              data: { question: trimmedQuestion },
+              data: { question: trimmedQuestion, content: trimmedQuestion },
             });
           },
         },
@@ -262,7 +262,7 @@ export function ChatPageFeature() {
 
     sendMessageMutation.mutate({
       sessionId: currentSessionId,
-      data: { question: trimmedQuestion },
+      data: { question: trimmedQuestion, content: trimmedQuestion },
     });
   };
 

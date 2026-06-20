@@ -187,30 +187,16 @@ async def send_message(
         result = await message_repo.collection.insert_one(user_message_dict)
         user_message_id = str(result.inserted_id)
 
+        # Get the saved user message from DB to include any database-generated fields
+        saved_user_message = await message_repo.collection.find_one({"_id": ObjectId(user_message_id)})
+        saved_user_message["id"] = str(saved_user_message["_id"])
+        saved_user_message.pop("_id")
+
         # Get settings and create RAGGraph to get the answer
         settings = get_settings()
         factory = ProviderFactory(settings)
         llm = factory.create_llm()
         embedding_provider = factory.create_embedding()
-        # We need to get the vector_store from the app state. Since we don't have the request, we'll try to get it from mongodb?
-        # Actually, in main.py, we set app.state.vector_store. We don't have access to the app here.
-        # We'll change the approach: we'll get the vector_store from the mongodb database? Not.
-        # We'll have to pass the vector_store as a dependency or store it in a way that we can access.
-        # For now, we'll assume that the vector_store is available via the mongodb database? It's not.
-        # We'll look at how the query endpoint does it: it gets the vector_store from request.app.state.vector_store.
-        # We'll change the endpoint to accept the request.
-        # Let's refactor: we'll pass the request to the endpoint and get the vector_store from request.app.state.vector_store.
-        # We'll do that in the endpoint function below.
-        # We'll need to change the function signature to include the request.
-        # We'll do that in the actual code.
-        # For now, we'll leave a placeholder and note that we need to get the vector_store from the app state.
-        # We'll skip the actual implementation of the RAG call and note that it should be done.
-        # But we must provide a working solution.
-        # Let's get the vector_store from the mongodb database? We can't.
-        # We'll change the way we call the RAGGraph: we'll create it with the same parameters as in main.py and query.py.
-        # In main.py, we have:
-        #   app.state.vector_store = VectorStoreFactory(settings).create()
-        # We can create the vector_store again here? Yes, we can.
         from app.vectorstores.vector_store_factory import VectorStoreFactory
         vector_store = VectorStoreFactory(settings).create()
 
@@ -230,7 +216,7 @@ async def send_message(
             "role": "assistant",
             "content": rag_response.answer,
             "created_at": datetime.utcnow(),
-            "trace_id": rag_response.trace_id,
+            "trace_id": str(rag_response.trace_id) if rag_response.trace_id is not None else None,
             "model": rag_response.model,
             "embedding_provider": rag_response.embedding_model,
             "vector_db": rag_response.vector_db,
@@ -240,19 +226,22 @@ async def send_message(
         result = await message_repo.collection.insert_one(assistant_message_dict)
         assistant_message_id = str(result.inserted_id)
 
+        # Get the saved assistant message from DB to include any database-generated fields
+        saved_assistant_message = await message_repo.collection.find_one({"_id": ObjectId(assistant_message_id)})
+        saved_assistant_message["id"] = str(saved_assistant_message["_id"])
+        saved_assistant_message.pop("_id")
+
         # Update the session's updated_at
         await session_repo.collection.update_one(
             {"_id": ObjectId(session_id)},
             {"$set": {"updated_at": datetime.utcnow()}},
         )
 
-        # Return the created user and assistant messages? Or just the assistant message?
-        # The task says: Return the full created user message, assistant message, answer, and trace reference.
-        # We'll return both messages.
+        # Return the created user and assistant messages
         return ApiResponse(
             data={
-                "user_message": {**user_message_dict, "id": user_message_id},
-                "assistant_message": {**assistant_message_dict, "id": assistant_message_id},
+                "user_message": saved_user_message,
+                "assistant_message": saved_assistant_message,
             },
             message="Message sent",
         )

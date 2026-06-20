@@ -168,7 +168,7 @@ export function IngestionPageFeature() {
     <div className="space-y-6">
       {/* Job Header */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold">Ingestion Jobs</h2>
+        {/* <h2 className="text-xl font-bold">Ingestion Jobs</h2> */}
         {jobsArray.length > 0 && (
           <button
             onClick={() => {

@@ -19,17 +19,22 @@ services:
     volumes:
       - backend_logs:/app/logs
       - C:/Users/vishw/Downloads/policybot_test_dataset:/app/data/policies
+      - ./backend:/app:cached
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     depends_on:
       - qdrant
 
   frontend:
-    build:
-      context: ./frontend
-      args:
-        VITE_API_BASE_URL: http://localhost:8000/api/v1
+    image: node:20-alpine
     container_name: policybot-frontend
+    working_dir: /app
     ports:
-      - "8080:80"
+      - "8080:5173"
+    volumes:
+      - ./frontend:/app:cached
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8000/api/v1
+    command: ["sh", "-c", "npm install && npm run dev"]
     depends_on:
       - backend
 

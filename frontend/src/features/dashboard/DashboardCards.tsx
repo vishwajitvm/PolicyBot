@@ -1,18 +1,32 @@
 import { Database, FileText, Gauge, GitBranch, MessageSquare, Timer, UploadCloud, Zap } from "lucide-react";
 import { Card } from "../../components/ui/Card";
 
-const cards = [
-  ["Documents Indexed", "0", FileText],
-  ["Chunks Indexed", "0", GitBranch],
-  ["Sources Connected", "0", Database],
-  ["Running Jobs", "0", UploadCloud],
-  ["Average Confidence", "0%", Gauge],
-  ["Latest Query Latency", "0 ms", Timer],
-  ["Active LLM Provider", "Gemini", MessageSquare],
-  ["Active Vector DB", "Qdrant", Zap]
-];
+interface DashboardCardsProps {
+  stats?: {
+    documents_indexed: number;
+    chunks_indexed: number;
+    sources_connected: number;
+    running_jobs: number;
+    average_confidence: number;
+    latest_query_latency: number;
+    active_llm_provider: string;
+    active_vector_db: string;
+  };
+}
 
-export function DashboardCards() {
+export function DashboardCards({ stats }: DashboardCardsProps) {
+  // Use stats data if available, otherwise fallback to default values
+  const cards = [
+    ["Documents Indexedd", stats?.documents_indexed?.toString() ?? "0", FileText],
+    ["Chunks Indexed", stats?.chunks_indexed?.toString() ?? "0", GitBranch],
+    ["Sources Connected", stats?.sources_connected?.toString() ?? "0", Database],
+    ["Running Jobs", stats?.running_jobs?.toString() ?? "0", UploadCloud],
+    ["Average Confidence", `${stats?.average_confidence ?? 0}%`, Gauge],
+    ["Latest Query Latency", `${stats?.latest_query_latency ?? 0} ms`, Timer],
+    ["Active LLM Provider", stats?.active_llm_provider ?? "Gemini", MessageSquare],
+    ["Active Vector DB", stats?.active_vector_db ?? "Qdrant", Zap]
+  ];
+
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {cards.map(([label, value, Icon]) => (

@@ -5,11 +5,13 @@
   --text: 237 242 247;
   --muted: 145 158 171;
   --primary: 39 197 165;
+  --gradient-start: 139 92 246; /* Default to violet */
+  --gradient-end: 6 182 212;   /* Default to cyan */
 }
 
 :root[data-gradient="true"] body {
   background:
-    linear-gradient(135deg, rgb(var(--surface)), rgba(var(--primary), 0.16)),
+    linear-gradient(135deg, rgb(var(--surface)), rgb(var(--gradient-start)), rgb(var(--gradient-end))),
     rgb(var(--surface));
 }
 

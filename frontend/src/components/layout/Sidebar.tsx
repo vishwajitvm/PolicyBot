@@ -15,22 +15,27 @@ const links = [
 
 export function Sidebar() {
   return (
-    <aside className="hidden w-64 shrink-0 border-r border-border bg-panel p-4 md:block">
-      <div className="mb-6 text-lg font-bold text-text">PolicyBot</div>
-      <nav className="space-y-1">
-        {links.map(({ to, label, icon: Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) =>
-              cn("flex items-center gap-3 rounded-md px-3 py-2 text-sm text-muted hover:bg-surface hover:text-text", isActive && "bg-primary text-white hover:bg-primary hover:text-white")
-            }
-          >
-            <Icon size={17} />
-            {label}
-          </NavLink>
-        ))}
-      </nav>
+    <aside className="w-full flex flex-col h-full">
+      <div className="flex-shrink-0 flex items-center p-4 border-b border-border">
+        <span className="text-lg font-bold text-text">PolicyBot</span>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-4">
+        <nav className="mt-4 space-y-1">
+          {links.map(({ to, label, icon: Icon }) => (
+            <NavLink
+              key={to}
+              to={to}
+              className={({ isActive }) =>
+                cn("flex items-center gap-3 rounded-md px-3 py-2 text-sm text-muted hover:bg-surface hover:text-text", isActive && "bg-primary text-white hover:bg-primary hover:text-white")
+              }
+            >
+              <Icon size={17} />
+              <span className="ml-2">{label}</span>
+            </NavLink>
+          ))}
+        </nav>
+      </div>
     </aside>
   );
 }

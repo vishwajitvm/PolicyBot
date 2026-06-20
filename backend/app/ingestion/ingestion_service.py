@@ -20,6 +20,7 @@ from app.ingestion.hash_service import HashService
 from app.ingestion.ingestion_job_service import IngestionJobService
 from app.ingestion.metadata_extractor import MetadataExtractor
 from app.models.document import Document
+from app.models.ingestion_job import IngestionJob
 from app.providers.base_embedding import BaseEmbeddingProvider
 from app.vectorstores.base_vector_store import BaseVectorStore, VectorChunk
 from app.websocket_manager import manager
@@ -131,6 +132,8 @@ class IngestionService:
             try:
                 updated_job = await self.jobs.get(job_id)
                 if updated_job:
+                    if isinstance(updated_job, dict):
+                        updated_job = IngestionJob(**updated_job)
                     await manager.send_update(job_id, updated_job.model_dump())
             except Exception as e:
                 logger.error(f"Failed to send WebSocket update for job {job_id}: {e}")
@@ -381,7 +384,11 @@ class IngestionService:
 
             # Return the final job
             final_job = await self.jobs.get(job["job_id"])
-            return final_job.model_dump() if final_job else job
+            if final_job:
+                if isinstance(final_job, dict):
+                    final_job = IngestionJob(**final_job)
+                return final_job.model_dump()
+            return job
 
         except Exception as exc:
             logger.exception("Failed to create ingestion job for source_id %s", source_id)
@@ -400,12 +407,22 @@ class IngestionService:
                 if not job.get("logs"):
                     job["logs"] = [self._timestamped_log("Ingestion failed to start")]
 
-            job.update({
-                "status": "failed",
-                "phase": "failed",
-                "errors": [str(exc)],
-                "updated_at": finished_at,
-            })
+            # Update job with failed status and error information via _update_job_progress
+            # This ensures WebSocket notifications are sent for failed jobs
+            await self._update_job_progress(
+                job["job_id"],
+                status="failed",
+                phase="failed",
+                error=str(exc),  # Primary error message
+                errors=[str(exc)],  # Error list
+                updated_at=finished_at,
+                logs=job.get("logs", []),
+            )
 
-            await self.jobs.upsert_one({"job_id": job["job_id"]}, job)
+            # Get the final job from database to return
+            final_job = await self.jobs.get(job["job_id"])
+            if final_job:
+                if isinstance(final_job, dict):
+                    final_job = IngestionJob(**final_job)
+                return final_job.model_dump()
             return job

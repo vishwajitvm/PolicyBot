@@ -2,10 +2,13 @@ import type { IngestionJob } from "../../api/ingestion.api";
 import { Badge } from "../../components/ui/Badge";
 import { Progress } from "../../components/ui/Progress";
 
-export function IngestionJobStatus({ job }: { job: IngestionJob }) {
+export function IngestionJobStatus({ job, onClick }: { job: IngestionJob; onClick?: () => void }) {
   const progress = job.progress_percent ?? 0;
   return (
-    <div className="rounded-md border border-border bg-surface p-3">
+    <div
+      className={`rounded-md border border-border bg-surface p-3 cursor-pointer hover:bg-surface-variant ${onClick ? "transition-colors" : ""}`}
+      onClick={onClick}
+    >
       <div className="flex items-center justify-between mb-2">
         <div>
           <strong>{job.job_id.slice(0, 8)}...</strong>

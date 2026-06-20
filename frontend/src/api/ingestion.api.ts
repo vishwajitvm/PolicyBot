@@ -19,6 +19,7 @@ export type IngestionJob = {
   indexed_chunks: number;
   documents_per_minute: number;
   chunks_per_minute: number;
+  current_document?: string; // Currently processing file
   errors: string[];
   logs: string[];
   error?: string; // failure reason

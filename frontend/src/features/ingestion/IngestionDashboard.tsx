@@ -155,6 +155,35 @@ export function IngestionDashboard({ job }: { job: IngestionJob }) {
         </div>
       </Card>
 
+      {/* Error Details Panel (shown when job has errors) */}
+      {(job.error || job.errors?.length > 0) && (
+        <Card>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold">Error Details</h3>
+          </div>
+          <div className="space-y-2">
+            {job.error && (
+              <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3">
+                <h4 className="mb-2 text-destructive font-medium">Failure Reason:</h4>
+                <p className="text-destructive text-sm whitespace-pre-wrap break-all">{job.error}</p>
+              </div>
+            )}
+            {job.errors?.length > 0 && (
+              <>
+                <h4 className="mb-2 text-destructive font-medium">Error List:</h4>
+                <div className="space-y-1">
+                  {job.errors.map((err, index) => (
+                    <div key={index} className="bg-destructive/5 border border-destructive/20 rounded-md p-2">
+                      <p className="text-destructive text-xs whitespace-pre-wrap break-all">{err}</p>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </Card>
+      )}
+
       {/* Live Activity Panel */}
       <Card>
         <div className="flex items-center justify-between mb-3">

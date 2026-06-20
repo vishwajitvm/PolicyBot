@@ -72,10 +72,6 @@ class IngestionService:
                     try:
                         content_hash = await self.hasher.file_hash(item.path)
                         existing = await self.documents.find_by_path(source_id, str(item.path))
-                        if existing and existing.get("content_hash") == content_hash:
-                            skipped += 1
-                            logs.append(f"Skipped unchanged file: {item.path.name}")
-                            continue
                         text = await self.loader.load_text(item.path)
                         chunks = self.chunker.split(text)
                         metadata = self.metadata.extract(item.path, source, content_hash)
@@ -110,10 +106,24 @@ class IngestionService:
                             )
                         await self.vector_store.upsert_chunks(vector_chunks)
                         processed += 1
-                        logs.append(f"Indexed {item.path.name} with {len(chunks)} chunks")
+                        unchanged = existing and existing.get("content_hash") == content_hash
+                        if unchanged:
+                            logs.append(f"Skipped unchanged file: {item.path.name} (ensuring vectors)")
+                            skipped += 1
+                        else:
+                            logs.append(f"Indexed {item.path.name} with {len(chunks)} chunks")
                     except Exception as exc:
                         logger.exception("Failed to ingest %s", item.path)
                         errors.append(f"{item.path}: {exc}")
+                    # Update job after each file
+                    job.update({
+                        "total_documents": total,
+                        "processed_documents": processed,
+                        "skipped_documents": skipped,
+                        "errors": errors,
+                        "logs": logs,
+                    })
+                    await self.jobs.upsert_one({"job_id": job["job_id"]}, job)
             except Exception as exc:
                 status = "failed"
                 errors.append(str(exc))

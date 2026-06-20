@@ -16,7 +16,12 @@ export function SourcesPageFeature() {
   const { data = [] } = useQuery({ queryKey: ["sources"], queryFn: listSources, retry: false });
   const queryClient = useQueryClient();
   const remove = useMutation({ mutationFn: deleteSource, onSuccess: () => queryClient.invalidateQueries({ queryKey: ["sources"] }) });
-  const ingest = useMutation({ mutationFn: startIngestion });
+  const ingest = useMutation({
+    mutationFn: startIngestion,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["ingestion-jobs"] });
+    },
+  });
   return (
     <div className="space-y-5">
       <div className="grid gap-4 lg:grid-cols-2">
@@ -35,7 +40,18 @@ export function SourcesPageFeature() {
               <div key={source.source_id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-surface p-3">
                 <div><strong>{source.name}</strong><p className="text-sm text-muted">{source.source_type} · {source.status}</p></div>
                 <div className="flex gap-2">
-                  <Button onClick={() => ingest.mutate(source.source_id)}><UploadCloud size={16} />Start Ingestion</Button>
+                  <Button disabled={ingest.isPending} onClick={() => ingest.mutate(source.source_id)}>
+                    {ingest.isPending ? (
+                      <>
+                        <UploadCloud size={16} className="mr-2 h-4 w-4 animate-spin" />
+                        Ingesting...
+                      </>
+                    ) : (
+                      <>
+                        <UploadCloud size={16} /> Start Ingestion
+                      </>
+                    )}
+                  </Button>
                   <Button className="bg-red-500" onClick={() => remove.mutate(source.source_id)}><Trash2 size={16} /></Button>
                 </div>
               </div>

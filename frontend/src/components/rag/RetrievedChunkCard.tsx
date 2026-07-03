@@ -20,7 +20,7 @@ export function RetrievedChunkCard({ chunk }: { chunk: Record<string, unknown> }
       <div className="flex items-start gap-4 p-4">
         {/* Badge with score */}
         <div className="flex-shrink-0 mt-0.5">
-          <Badge variant={score >= 0.8 ? "success" : score >= 0.6 ? "warning" : "destructive">
+          <Badge variant={score >= 0.8 ? "success" : score >= 0.6 ? "warning" : "destructive"}>
             {score.toFixed(3)}
           </Badge>
         </div>

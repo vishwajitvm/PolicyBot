@@ -3,7 +3,7 @@ import type { IngestionJob } from "../../api/ingestion.api";
 import { Badge } from "../../components/ui/Badge";
 import { Card } from "../../components/ui/Card";
 import { Progress } from "../../components/ui/Progress";
-import { AlertTriangle, Clock, Database, RefreshCw, Settings, Upload, FileText, Folder, arrowUpRight } from "lucide-react";
+import { AlertTriangle, Clock, Database, RefreshCw, Settings, Upload, FileText, Folder, ArrowUpRight } from "lucide-react";
 
 export function IngestionDashboard({ job }: { job: IngestionJob }) {
   const [logs, setLogs] = useState<string[]>(job.logs ?? []);

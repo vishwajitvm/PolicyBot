@@ -25,7 +25,7 @@ describe("PolicyBot frontend", () => {
 
   it("renders chat page", () => {
     renderWithProviders(<ChatPageFeature />);
-    expect(screen.getByPlaceholderText(/Ask across indexed/)).toBeInTheDocument();
+    expect(screen.getByText(/Select a chat to start/i)).toBeInTheDocument();
   });
 
   it("renders sources page", () => {

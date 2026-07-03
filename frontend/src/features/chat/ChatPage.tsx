@@ -11,6 +11,7 @@ import {
   Trash2,
   User,
 } from "lucide-react";
+import { formatDate, formatTime } from "../../utils/formatters";
 
 import {
   createChatSession,
@@ -66,23 +67,7 @@ function getErrorMessage(error: unknown): string {
   return "Something went wrong";
 }
 
-function formatDate(value?: string): string {
-  if (!value) return "";
 
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-
-  return date.toLocaleString();
-}
-
-function formatTime(value?: string): string {
-  if (!value) return "";
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-
-  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-}
 
 function getMessageText(message: ChatMessage): string {
   return message.content || message.answer || message.question || "";
@@ -512,7 +497,7 @@ export function ChatPageFeature() {
 
               <div className="shrink-0 border-t bg-background p-4">
                 <div className="mx-auto max-w-3xl">
-                  <ChatInput onAsk={handleSendMessage} disabled={sendMessageMutation.isPending} />
+                  <ChatInput onAsk={handleSendMessage} pending={sendMessageMutation.isPending} />
                 </div>
               </div>
             </>
@@ -539,7 +524,7 @@ export function ChatPageFeature() {
       </div>
 
       {/* Rename modal */}
-      <Modal open={openRenameModal} onClose={setOpenRenameModal} className="w-96">
+      <Modal open={openRenameModal} onClose={() => setOpenRenameModal(false)} className="w-96">
         <div className="px-6 py-4">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-lg font-semibold">Rename Chat</h3>
@@ -567,7 +552,7 @@ export function ChatPageFeature() {
       </Modal>
 
       {/* Delete modal */}
-      <Modal open={openDeleteModal} onClose={setOpenDeleteModal} className="w-96">
+      <Modal open={openDeleteModal} onClose={() => setOpenDeleteModal(false)} className="w-96">
         <div className="px-6 py-4">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-lg font-semibold">Delete Chat</h3>

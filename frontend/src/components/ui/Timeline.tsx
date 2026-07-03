@@ -1,5 +1,5 @@
 import type { TraceEvent } from "../../types/trace.types";
-import { formatDate, formatTime } from "../../../features/chat/ChatPage";
+import { formatDate, formatTime } from "../../utils/formatters";
 
 function formatJSONSummary(summary: Record<string, unknown>): string {
   // Filter out empty summaries and format nicely

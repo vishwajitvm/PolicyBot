@@ -22,3 +22,7 @@ async def ensure_indexes(mongo: MongoDB) -> None:
     for collection, fields in INDEXES.items():
         for field in fields:
             await db[collection].create_index(field)
+            
+    # Create text index for keyword search
+    from pymongo import TEXT
+    await db["chunks"].create_index([("text", TEXT)])

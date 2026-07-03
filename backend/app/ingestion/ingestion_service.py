@@ -1,4 +1,4 @@
-import logging
+from tracenest import logger
 import asyncio
 import time
 from datetime import datetime
@@ -25,7 +25,7 @@ from app.providers.base_embedding import BaseEmbeddingProvider
 from app.vectorstores.base_vector_store import BaseVectorStore, VectorChunk
 from app.websocket_manager import manager
 
-logger = logging.getLogger(__name__)
+
 
 
 class IngestionService:

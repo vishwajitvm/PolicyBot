@@ -1,9 +1,9 @@
 from typing import Dict, Set
 from fastapi import WebSocket
 import json
-import logging
+from tracenest import logger
 
-logger = logging.getLogger(__name__)
+
 
 
 class ConnectionManager:

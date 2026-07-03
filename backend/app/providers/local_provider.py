@@ -4,9 +4,9 @@ from app.providers.base_embedding import BaseEmbeddingProvider
 from app.providers.base_llm import BaseLLMProvider, LLMResponse
 
 import httpx
-import logging
+from tracenest import logger
 
-logger = logging.getLogger(__name__)
+
 
 
 class LocalProvider(BaseLLMProvider, BaseEmbeddingProvider):

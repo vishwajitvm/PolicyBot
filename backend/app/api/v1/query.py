@@ -1,4 +1,4 @@
-import logging
+from tracenest import logger
 from fastapi import APIRouter, Request
 
 from app.db.mongodb import mongodb
@@ -7,7 +7,7 @@ from app.rag.rag_graph import RAGGraph
 from app.schemas.common import ApiResponse
 from app.schemas.query import QueryRequest
 
-logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/query")
 
 

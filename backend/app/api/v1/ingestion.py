@@ -1,4 +1,4 @@
-import logging
+from tracenest import logger
 from datetime import datetime
 from fastapi import APIRouter, BackgroundTasks, Request, WebSocket, WebSocketDisconnect
 from fastapi.encoders import jsonable_encoder
@@ -14,7 +14,7 @@ from app.schemas.common import ApiResponse
 from app.schemas.ingestion import IngestionJobCreate
 from app.websocket_manager import manager
 
-logger = logging.getLogger(__name__)
+
 
 router = APIRouter(prefix="/ingestion")
 

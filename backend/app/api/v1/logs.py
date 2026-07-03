@@ -1,4 +1,4 @@
-import logging
+from tracenest import logger
 from datetime import datetime
 
 from fastapi import APIRouter, Request
@@ -7,7 +7,7 @@ from fastapi.responses import HTMLResponse
 from app.observability.log_store import LogStore
 from app.schemas.common import ApiResponse
 
-logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/logs")
 
 

@@ -1,4 +1,4 @@
-import logging
+from tracenest import logger
 from uuid import uuid4
 
 from fastapi import APIRouter
@@ -8,7 +8,7 @@ from app.evaluation.eval_service import EvaluationService
 from app.schemas.common import ApiResponse
 from app.schemas.evaluation import DatasetCreate, EvaluationRunCreate
 
-logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/evaluation")
 
 

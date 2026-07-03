@@ -18,9 +18,9 @@ from app.schemas.chat import (
 from app.schemas.query import QueryResponse
 from datetime import datetime
 from bson import ObjectId
-import logging
+from tracenest import logger
 
-logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/chat", tags=["chat"])
 
 

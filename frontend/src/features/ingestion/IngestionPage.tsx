@@ -20,20 +20,50 @@ export function IngestionPageFeature() {
     const fetchJobs = async () => {
       try {
         const jobList = await listIngestionJobs();
-        const newMap = new Map<string, IngestionJob>();
-        jobList.forEach((job) => {
-          newMap.set(job.job_id, job);
 
-          // Ensure WS connection exists for each job
-          if (!wsConnectionsRef.current.has(job.job_id)) {
-            startWsConnection(job.job_id);
+        // Create a map from polling data for easy lookup
+        const pollingMap = new Map<string, IngestionJob>();
+        jobList.forEach((job) => {
+          pollingMap.set(job.job_id, job);
+        });
+
+        // Update existing jobs: prefer newer data based on updated_at timestamp
+        // Also ensure WS connections exist for all jobs that should have them
+        const currentMap = new Map(jobsMapRef.current);
+        currentMap.forEach((existingJob, jobId) => {
+          const pollingJob = pollingMap.get(jobId);
+          if (pollingJob) {
+            // Job exists in both maps - compare timestamps
+            const existingUpdatedAt = new Date(existingJob.updated_at).getTime();
+            const pollingUpdatedAt = new Date(pollingJob.updated_at).getTime();
+
+            if (pollingUpdatedAt > existingUpdatedAt) {
+              // Polling data is newer - use it
+              currentMap.set(jobId, pollingJob);
+            }
+            // Otherwise keep existing data (WebSocket data is newer or same)
+          }
+          // If job doesn't exist in polling data, it will be handled in removal detection below
+
+          // Ensure WS connection exists for this job (unless it's being removed)
+          if (pollingMap.has(jobId) && !wsConnectionsRef.current.has(jobId)) {
+            startWsConnection(jobId);
+          }
+        });
+
+        // Add new jobs from polling data and start WS connections for them
+        jobList.forEach((pollingJob) => {
+          if (!currentMap.has(pollingJob.job_id)) {
+            currentMap.set(pollingJob.job_id, pollingJob);
+            // Start WS connection for new job
+            startWsConnection(pollingJob.job_id);
           }
         });
 
         // Detect removed jobs to close WS connections
         const oldMap = jobsMapRef.current;
         oldMap.forEach((oldJob, jobId) => {
-          if (!newMap.has(jobId)) {
+          if (!pollingMap.has(jobId)) {
             // Removed job: close WS connection
             const ws = wsConnectionsRef.current.get(jobId);
             if (ws) {
@@ -44,7 +74,7 @@ export function IngestionPageFeature() {
         });
 
         // Update the jobs map ref
-        jobsMapRef.current = newMap;
+        jobsMapRef.current = currentMap;
         // Trigger re-render for initial load or polling updates
         setUpdateTrigger(prev => prev + 1);
       } catch (error) {
@@ -76,7 +106,9 @@ export function IngestionPageFeature() {
       return;
     }
 
-    const wsUrl = `${import.meta.env.VITE_API_BASE_URL.replace(/^http/, 'ws')}/ingestion/ws/${jobId}`;
+    // Convert http to ws and https to wss
+    const wsProtocol = import.meta.env.VITE_API_BASE_URL.startsWith('https') ? 'wss' : 'ws';
+    const wsUrl = `${import.meta.env.VITE_API_BASE_URL.replace(/^https?/, wsProtocol)}/ingestion/ws/${jobId}`;
     const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {

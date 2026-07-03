@@ -9,6 +9,10 @@ export type DashboardStats = {
   latest_query_latency: number;
   active_llm_provider: string;
   active_vector_db: string;
+  chunk_size: number;
+  llm_provider: string;
+  embedding_provider: string;
+  vector_db_provider: string;
 };
 
 export const getDashboardStats = () => apiClient<DashboardStats>("/dashboard/stats");

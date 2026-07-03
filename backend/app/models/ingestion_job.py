@@ -23,6 +23,7 @@ class IngestionJob(BaseModel):
     indexed_chunks: int = 0
     documents_per_minute: float = 0.0
     chunks_per_minute: float = 0.0
+    current_document: Optional[str] = None
     errors: List[str] = []
     logs: List[str] = []
     error: Optional[str] = None  # failure reason

@@ -66,8 +66,8 @@ app.add_exception_handler(PolicyBotError, policybot_exception_handler)
 app.add_exception_handler(Exception, unhandled_exception_handler)
 app.include_router(api_router, prefix=settings.api_prefix)
 
-# try:
-#     from tracenest.ui.router import router as tracenest_router
-#     app.include_router(tracenest_router, prefix="/tracenest", tags=["tracenest"])
-# except ImportError:
-#     pass
+try:
+    from tracenest.ui.router import router as tracenest_router
+    app.include_router(tracenest_router, tags=["tracenest"])
+except ImportError:
+    pass

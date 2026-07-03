@@ -1,5 +1,6 @@
 from fastapi import Request
 from fastapi.responses import JSONResponse
+from tracenest import logger
 
 
 class PolicyBotError(Exception):
@@ -21,6 +22,7 @@ class NotFoundError(PolicyBotError):
 
 
 async def policybot_exception_handler(_: Request, exc: PolicyBotError) -> JSONResponse:
+    logger.warning(f"PolicyBotError ({exc.code}): {exc.message}", exc_info=True)
     return JSONResponse(
         status_code=exc.status_code,
         content={"success": False, "error": {"code": exc.code, "message": exc.message, "details": {}}},
@@ -28,6 +30,7 @@ async def policybot_exception_handler(_: Request, exc: PolicyBotError) -> JSONRe
 
 
 async def unhandled_exception_handler(_: Request, exc: Exception) -> JSONResponse:
+    logger.error(f"Unhandled exception: {exc}", exc_info=True)
     return JSONResponse(
         status_code=500,
         content={

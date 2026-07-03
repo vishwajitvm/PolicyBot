@@ -1,4 +1,4 @@
-import logging
+from tracenest import logger
 from urllib.parse import urlencode
 
 from fastapi import APIRouter
@@ -9,7 +9,7 @@ from app.db.mongodb import mongodb
 from app.schemas.common import ApiResponse
 from app.schemas.google_drive import FolderSyncRequest, PickerSelection
 
-logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/google-drive")
 
 

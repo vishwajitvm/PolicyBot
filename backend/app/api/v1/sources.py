@@ -1,4 +1,4 @@
-import logging
+from tracenest import logger
 from datetime import datetime
 from uuid import uuid4
 
@@ -11,7 +11,7 @@ from app.models.source import Source
 from app.schemas.common import ApiResponse
 from app.schemas.source import SourceCreateDrive, SourceCreateLocal
 
-logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/sources")
 
 

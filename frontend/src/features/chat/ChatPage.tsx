@@ -11,6 +11,7 @@ import {
   Trash2,
   User,
 } from "lucide-react";
+import { formatDate, formatTime } from "../../utils/formatters";
 
 import {
   createChatSession,
@@ -66,23 +67,7 @@ function getErrorMessage(error: unknown): string {
   return "Something went wrong";
 }
 
-function formatDate(value?: string): string {
-  if (!value) return "";
 
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-
-  return date.toLocaleString();
-}
-
-function formatTime(value?: string): string {
-  if (!value) return "";
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-
-  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-}
 
 function getMessageText(message: ChatMessage): string {
   return message.content || message.answer || message.question || "";
@@ -512,7 +497,7 @@ export function ChatPageFeature() {
 
               <div className="shrink-0 border-t bg-background p-4">
                 <div className="mx-auto max-w-3xl">
-                  <ChatInput onAsk={handleSendMessage} disabled={sendMessageMutation.isPending} />
+                  <ChatInput onAsk={handleSendMessage} pending={sendMessageMutation.isPending} />
                 </div>
               </div>
             </>
@@ -539,9 +524,14 @@ export function ChatPageFeature() {
       </div>
 
       {/* Rename modal */}
-      <Modal open={openRenameModal} onOpenChange={setOpenRenameModal} className="w-96">
+      <Modal open={openRenameModal} onClose={() => setOpenRenameModal(false)} className="w-96">
         <div className="px-6 py-4">
-          <h3 className="mb-4 text-lg font-semibold">Rename Chat</h3>
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-lg font-semibold">Rename Chat</h3>
+            <Button variant="outline" onClick={setOpenRenameModal}>
+              Close
+            </Button>
+          </div>
           <Input
             value={renameTitle}
             onChange={(event) => setRenameTitle(event.target.value)}
@@ -562,9 +552,14 @@ export function ChatPageFeature() {
       </Modal>
 
       {/* Delete modal */}
-      <Modal open={openDeleteModal} onOpenChange={setOpenDeleteModal} className="w-96">
+      <Modal open={openDeleteModal} onClose={() => setOpenDeleteModal(false)} className="w-96">
         <div className="px-6 py-4">
-          <h3 className="mb-4 text-lg font-semibold">Delete Chat</h3>
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-lg font-semibold">Delete Chat</h3>
+            <Button variant="outline" onClick={setOpenDeleteModal}>
+              Close
+            </Button>
+          </div>
           <p className="mb-4 text-sm text-muted">
             Are you sure you want to delete this chat? This action cannot be undone.
           </p>
@@ -581,10 +576,13 @@ export function ChatPageFeature() {
       </Modal>
 
       {/* Trace modal */}
-      <Modal open={openTraceModal} onOpenChange={setOpenTraceModal} className="w-[90%] max-w-4xl">
+      <Modal open={openTraceModal} onClose={handleCloseTraceModal} className="w-[90%] max-w-[1200px]">
         <div className="px-6 py-4">
-          <div className="mb-4 flex items-center justify-between gap-4">
-            <h3 className="text-lg font-semibold">Trace Details</h3>
+          <div className="mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Activity className="h-5 w-5 text-primary" />
+              <h3 className="text-lg font-semibold">Trace Details</h3>
+            </div>
             <Button variant="outline" onClick={handleCloseTraceModal}>
               Close
             </Button>
@@ -597,23 +595,45 @@ export function ChatPageFeature() {
           ) : traceQuery.error ? (
             <Card className="border-red-500 p-4 text-red-200">{getErrorMessage(traceQuery.error)}</Card>
           ) : traceData ? (
-            <div className="grid gap-4 xl:grid-cols-[1fr_380px]">
-              <div className="space-y-4">
-                <Card className="p-4">
-                  <h3 className="mb-3 font-semibold">Operational Trace</h3>
-                  <TraceTimeline events={traceData?.events || []} />
-                </Card>
-
-                <div className="grid gap-4 lg:grid-cols-2">
-                  {(traceData?.retrieved_chunks || []).map((chunk: any, index: number) => (
-                    <RetrievedChunkCard key={chunk?.id || index} chunk={chunk} />
-                  ))}
+            <div className="gap-6">
+              {/* Operational Trace Section */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-text">Operational Trace</h3>
+                  <span className="text-xs text-muted">
+                    {traceData?.events?.length ?? 0} steps
+                  </span>
                 </div>
+                <TraceTimeline events={traceData?.events || []} />
               </div>
 
-              <div className="space-y-4">
-                <FreshnessDecisionCard decision={traceData?.freshness_decision || {}} />
-                <ScoreBreakdown scores={traceData?.scores || {}} />
+              {/* Retrieved Chunks Section */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-text">Retrieved Chunks</h3>
+                  <span className="text-xs text-muted">
+                    {traceData?.retrieved_chunks?.length ?? 0} chunks
+                  </span>
+                </div>
+                {(traceData?.retrieved_chunks || []).length === 0 ? (
+                  <p className="text-center text-muted py-4">No chunks were retrieved for this query.</p>
+                ) : (
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    {(traceData?.retrieved_chunks || []).map((chunk: any, index: number) => (
+                      <RetrievedChunkCard key={chunk?.id || index} chunk={chunk} />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Decision and Scores Section */}
+              <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+                <div className="space-y-4">
+                  <FreshnessDecisionCard decision={traceData?.freshness_decision || {}} />
+                </div>
+                <div className="space-y-4">
+                  <ScoreBreakdown scores={traceData?.scores || {}} />
+                </div>
               </div>
             </div>
           ) : (

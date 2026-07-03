@@ -1,4 +1,4 @@
-import logging
+from tracenest import logger
 from fastapi import APIRouter
 
 from app.core.exceptions import NotFoundError
@@ -6,7 +6,7 @@ from app.db.mongodb import mongodb
 from app.db.repositories.trace_repository import TraceRepository
 from app.schemas.common import ApiResponse
 
-logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/traces")
 
 

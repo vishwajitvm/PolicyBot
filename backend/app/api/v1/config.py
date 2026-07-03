@@ -1,11 +1,11 @@
-import logging
+from tracenest import logger
 from fastapi import APIRouter
 
 from app.core.config import get_settings
 from app.schemas.common import ApiResponse
 from app.schemas.config import ConfigPatch, RuntimeConfig
 
-logger = logging.getLogger(__name__)
+
 router = APIRouter()
 
 

@@ -18,9 +18,9 @@ from app.schemas.chat import (
 from app.schemas.query import QueryResponse
 from datetime import datetime
 from bson import ObjectId
-import logging
+from tracenest import logger
 
-logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/chat", tags=["chat"])
 
 
@@ -274,10 +274,14 @@ async def get_message_traces(
         # We'll look at the TraceService.
         # Given the time, we'll assume that the trace is stored in a collection named "traces" and we can get it by trace_id.
         # We'll create a simple lookup.
-        trace = await mongodb.db()["traces"].find_one({"trace_id": trace_id}, {"_id": 0})
+        trace = await mongodb.db()["query_traces"].find_one({"trace_id": trace_id}, {"_id": 0})
         if not trace:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Trace not found")
         return ApiResponse(data=trace, message="Trace retrieved")
+    except HTTPException as exc:
+        # Return ApiResponse format for HTTP exceptions
+        logger.warning(f"HTTP {exc.status_code}: {exc.detail}")
+        return ApiResponse(success=False, message=f"{exc.status_code}: {exc.detail}")
     except Exception as exc:
         logger.exception("Failed to get trace")
         return ApiResponse(success=False, message=str(exc))

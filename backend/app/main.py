@@ -1,4 +1,4 @@
-import logging
+from tracenest import logger
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -12,7 +12,7 @@ from app.db.indexes import ensure_indexes
 from app.db.mongodb import mongodb
 from app.vectorstores.vector_store_factory import VectorStoreFactory
 
-logger = logging.getLogger(__name__)
+
 
 
 @asynccontextmanager
@@ -65,3 +65,9 @@ app.add_middleware(
 app.add_exception_handler(PolicyBotError, policybot_exception_handler)
 app.add_exception_handler(Exception, unhandled_exception_handler)
 app.include_router(api_router, prefix=settings.api_prefix)
+
+try:
+    from tracenest.ui.router import router as tracenest_router
+    app.include_router(tracenest_router, tags=["tracenest"])
+except ImportError:
+    pass

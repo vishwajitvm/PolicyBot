@@ -1,11 +1,11 @@
-import logging
+from tracenest import logger
 from typing import Any
 from uuid import uuid5, NAMESPACE_URL
 
 from app.core.config import Settings
 from app.vectorstores.base_vector_store import BaseVectorStore, VectorChunk, VectorSearchResult
 
-logger = logging.getLogger(__name__)
+
 
 
 class QdrantVectorStore(BaseVectorStore):

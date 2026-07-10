@@ -270,7 +270,7 @@ export function ChatPageFeature() {
   }, [sessions]);
 
   return (
-    <main className="flex-1 flex flex-col h-full relative overflow-hidden bg-background min-w-0">
+    <main className="flex-1 flex flex-col h-full relative overflow-hidden bg-[#0f111a] min-w-0">
       {/* Abstract background elements */}
       <div className="absolute top-0 left-0 right-0 h-[500px] bg-gradient-to-b from-indigo-500/10 via-purple-500/5 to-transparent pointer-events-none opacity-50"></div>
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-indigo-500/10 blur-[100px] pointer-events-none"></div>
@@ -335,7 +335,7 @@ export function ChatPageFeature() {
                       if (isUser) {
                         return (
                           <div key={message.id} className="flex justify-end transition-all duration-300">
-                            <div className="max-w-[85%] rounded-3xl rounded-tr-sm bg-gradient-to-tr from-indigo-600 to-purple-600 px-6 py-4 text-white shadow-lg">
+                            <div className="max-w-[85%] rounded-3xl rounded-tr-sm bg-[#7c3aed] px-6 py-4 text-white shadow-lg">
                               <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">{messageText}</p>
                               {message.created_at && (
                                 <p className="mt-2 text-right text-[10px] text-white/60">{formatTime(message.created_at)}</p>
@@ -347,11 +347,11 @@ export function ChatPageFeature() {
 
                       return (
                         <div key={message.id} className="flex items-start gap-4 transition-all duration-300">
-                          <div className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/5 border border-white/10 shadow-inner">
+                          <div className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1c1f2e] border border-white/5 shadow-inner">
                             <Bot className="h-5 w-5 text-indigo-400" />
                           </div>
                           <div className="min-w-0 flex-1 max-w-[90%]">
-                            <div className="rounded-3xl rounded-tl-sm bg-white/5 backdrop-blur-md border border-white/10 px-6 py-4 text-gray-200 shadow-md">
+                            <div className="rounded-2xl rounded-tl-sm bg-[#1c1f2e] border-l-4 border-l-[#3bd59b] px-6 py-4 text-gray-200 shadow-md">
                               <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">{messageText}</p>
                               <div className="mt-3 flex items-center gap-3 text-[11px] text-muted">
                                 {message.created_at && <span>{formatTime(message.created_at)}</span>}
@@ -406,7 +406,7 @@ export function ChatPageFeature() {
         </div>
 
         {currentSessionId && (
-          <div className="shrink-0 bg-background/80 backdrop-blur-md border-t border-white/5 pt-4 pb-6 px-4 z-20">
+          <div className="shrink-0 pt-4 pb-6 px-4 z-20">
             <ChatInput onAsk={handleSendMessage} pending={sendMessageMutation.isPending} />
           </div>
         )}

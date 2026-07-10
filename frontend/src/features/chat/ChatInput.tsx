@@ -1,5 +1,5 @@
 import { FormEvent, useState, useRef, useEffect } from "react";
-import { Send } from "lucide-react";
+import { Send, Paperclip, Play } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 
 export function ChatInput({ onAsk, pending }: { onAsk: (question: string) => void; pending: boolean }) {
@@ -22,32 +22,33 @@ export function ChatInput({ onAsk, pending }: { onAsk: (question: string) => voi
 
   return (
     <form onSubmit={submit} className="relative flex w-full max-w-4xl mx-auto items-center">
-      <div className="relative w-full group">
-        {/* Subtle glow effect behind the input */}
-        <div className="absolute -inset-0.5 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 opacity-20 blur group-hover:opacity-40 transition duration-500"></div>
+      <div className="relative w-full group flex items-center bg-[#1c1f2e] border border-white/5 rounded-2xl p-2">
+        <button type="button" className="p-3 text-white/50 hover:text-white/80 transition-colors">
+          <Paperclip size={20} />
+        </button>
         
         <input
           ref={inputRef}
           value={question}
           onChange={(event) => setQuestion(event.target.value)}
           placeholder="Ask anything about your policy documents..."
-          className="relative w-full rounded-full border border-white/10 bg-black/40 px-6 py-4 pr-32 text-sm text-foreground shadow-xl outline-none backdrop-blur-md transition-all placeholder:text-muted focus:border-indigo-500/50 focus:bg-black/60 focus:ring-1 focus:ring-indigo-500/50"
+          className="flex-1 bg-transparent px-2 py-2 text-sm text-white/90 placeholder:text-white/40 focus:outline-none"
           disabled={pending}
         />
         
-        <div className="absolute right-2 top-1/2 -translate-y-1/2">
-          <Button
-            type="submit"
-            disabled={pending || !question.trim()}
-            className="rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 px-5 transition-transform hover:scale-105 active:scale-95 disabled:hover:scale-100"
-          >
-            {pending ? (
-              <span className="flex items-center gap-2">Thinking...</span>
-            ) : (
-              <span className="flex items-center gap-2"><Send size={16} /> Ask</span>
-            )}
-          </Button>
-        </div>
+        <Button
+          type="submit"
+          disabled={pending || !question.trim()}
+          className="rounded-xl bg-[#3bd59b] hover:bg-[#32b885] text-black font-semibold px-6 py-2 transition-transform hover:scale-105 active:scale-95 disabled:hover:scale-100 flex items-center gap-2"
+        >
+          {pending ? (
+            <span>Thinking...</span>
+          ) : (
+            <>
+              ASK <Play size={14} fill="currentColor" />
+            </>
+          )}
+        </Button>
       </div>
     </form>
   );

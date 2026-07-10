@@ -406,7 +406,7 @@ export function ChatPageFeature() {
         </div>
 
         {currentSessionId && (
-          <div className="shrink-0 pt-2 pb-0 px-4 z-20">
+          <div className="shrink-0 pt-2 pb-6 px-4 z-20">
             <ChatInput onAsk={handleSendMessage} pending={sendMessageMutation.isPending} />
           </div>
         )}

@@ -38,7 +38,7 @@ async def run_ingestion_task(source_id: str, request: Request):
         service = IngestionService(mongodb.db(), settings, embedding, request.app.state.vector_store)
         await service.run_for_source(source_id)
     except Exception as exc:
-        logger.error("Background ingestion task failed for source_id %s", source_id)
+        logger.error(f"Background ingestion task failed for source_id {source_id}")
         # The job should already be updated to failed by the service, but just in case
         job = IngestionJobService().create(source_id).model_dump()
         job.update({

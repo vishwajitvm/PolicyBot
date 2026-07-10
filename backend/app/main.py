@@ -27,12 +27,12 @@ async def lifespan(app: FastAPI):
         logger.info("MongoDB connected")
     except Exception as exc:
         mongodb.status_detail = str(exc)
-        logger.warning("MongoDB unavailable: %s", exc)
+        logger.warning(f"MongoDB unavailable: {exc}")
     try:
         await app.state.vector_store.ensure_collection()
         logger.info("Vector store initialized")
     except Exception as exc:
-        logger.warning("Vector store unavailable: %s", exc)
+        logger.warning(f"Vector store unavailable: {exc}")
     yield
     await mongodb.close()
 

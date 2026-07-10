@@ -28,13 +28,35 @@ class Settings(BaseSettings):
     gemini_embedding_model: str = "text-embedding-004"
 
     openai_api_key: str = ""
-    openai_chat_model: str = ""
-    openai_embedding_model: str = ""
+    openai_chat_model: str = "gpt-4o-mini"
+    openai_embedding_model: str = "text-embedding-3-small"
     anthropic_api_key: str = ""
     anthropic_chat_model: str = ""
+    
+    openrouter_api_key: str = ""
+    openrouter_chat_model: str = "google/gemini-2.0-flash-exp:free"
+    
+    deepseek_api_key: str = ""
+    deepseek_chat_model: str = "deepseek-chat"
+    
+    groq_api_key: str = ""
+    groq_chat_model: str = "llama-3.3-70b-versatile"
+    
+    mistral_api_key: str = ""
+    mistral_chat_model: str = "mistral-small-latest"
+    
+    nvidia_api_key: str = ""
+    nvidia_chat_model: str = "meta/llama-3.1-70b-instruct"
+    
+    huggingface_api_key: str = ""
+    huggingface_chat_model: str = "meta-llama/Llama-3.1-70B-Instruct"
+
     ollama_base_url: str = "http://host.docker.internal:11434"
     ollama_chat_model: str = "llama3.1"
     ollama_embedding_model: str = "nomic-embed-text"
+
+    llm_fallback_providers: str = ""
+    embedding_fallback_providers: str = ""
 
     pinecone_api_key: str = ""
     pinecone_index_name: str = ""

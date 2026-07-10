@@ -326,7 +326,7 @@ class IngestionService:
             return job
 
         except Exception as exc:
-            logger.error("Failed to create/run ingestion job for source_id %s", source_id)
+            logger.error(f"Failed to create/run ingestion job for source_id {source_id}")
             elapsed_seconds = int(time.time() - start_time)
             finished_at = datetime.now(timezone.utc)
 

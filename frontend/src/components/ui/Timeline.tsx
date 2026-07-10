@@ -45,39 +45,49 @@ export function Timeline({ events }: { events: TraceEvent[] }) {
         const timestamp = event.timestamp ? formatTime(new Date(event.timestamp).toISOString()) : "";
 
         return (
-          <div key={`${event.step}-${index}`} className="border rounded-lg border-border bg-surface p-4">
-            <div className="flex items-start gap-3 mb-2">
-              <div className="flex-shrink-0 text-primary">{stepIcon}</div>
+          <div key={`${event.step}-${index}`} className="border rounded-xl border-white/5 bg-white/5 backdrop-blur-sm p-5 shadow-lg transition-all hover:bg-white/10 hover:border-white/10">
+            <div className="flex items-start gap-4 mb-3">
+              <div className="flex-shrink-0 text-indigo-400 text-xl pt-0.5">{stepIcon}</div>
               <div className="flex-1">
                 <div className="flex items-center justify-between mb-1">
-                  <h4 className="font-semibold text-text">{stepName}</h4>
-                  <span className={`text-xs px-2 py-0.5 rounded ${event.status === 'completed' ? 'bg-success/20 text-success' : event.status === 'failed' ? 'bg-destructive/20 text-destructive' : 'bg-muted/20 text-muted'}`}>
+                  <h4 className="font-semibold text-white tracking-wide">{stepName}</h4>
+                  <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${event.status === 'completed' ? 'bg-emerald-500/20 text-emerald-300' : event.status === 'failed' ? 'bg-red-500/20 text-red-300' : 'bg-gray-500/20 text-gray-300'}`}>
                     {event.status}
                   </span>
                 </div>
-                {timestamp && <p className="text-xs text-muted">{timestamp}</p>}
+                {timestamp && <p className="text-xs text-gray-400 font-medium">{timestamp}</p>}
               </div>
             </div>
 
             {/* Input Summary */}
             {Object.keys(event.input_summary || {}).length > 0 && (
-              <div className="mb-3">
-                <p className="font-medium text-sm mb-1">Input:</p>
-                <pre className="bg-muted/50 p-3 rounded text-xs max-h-32 overflow-auto">{formatJSONSummary(event.input_summary)}</pre>
+              <div className="mb-4 mt-3">
+                <p className="font-medium text-sm text-gray-300 mb-1.5 flex items-center gap-2">
+                  <span className="w-1 h-4 rounded-full bg-indigo-500/50"></span>
+                  Input
+                </p>
+                <pre className="bg-black/40 border border-white/5 p-3.5 rounded-lg text-xs text-gray-300 font-mono max-h-40 overflow-y-auto shadow-inner">{formatJSONSummary(event.input_summary)}</pre>
               </div>
             )}
 
             {/* Output Summary */}
             {Object.keys(event.output_summary || {}).length > 0 && (
-              <div className="mb-3">
-                <p className="font-medium text-sm mb-1">Output:</p>
-                <pre className="bg-muted/50 p-3 rounded text-xs max-h-32 overflow-auto">{formatJSONSummary(event.output_summary)}</pre>
+              <div className="mb-3 mt-3">
+                <p className="font-medium text-sm text-gray-300 mb-1.5 flex items-center gap-2">
+                  <span className="w-1 h-4 rounded-full bg-purple-500/50"></span>
+                  Output
+                </p>
+                <pre className="bg-black/40 border border-white/5 p-3.5 rounded-lg text-xs text-gray-300 font-mono max-h-40 overflow-y-auto shadow-inner">{formatJSONSummary(event.output_summary)}</pre>
               </div>
             )}
 
             {/* Latency */}
             {event.latency_ms > 0 && (
-              <p className="text-xs text-muted text-right">⏱️ {event.latency_ms}ms</p>
+              <div className="mt-4 pt-3 border-t border-white/5 flex justify-end">
+                <p className="text-xs text-gray-400 font-medium bg-black/20 px-2.5 py-1 rounded-full flex items-center gap-1.5">
+                  <span className="text-[10px]">⏱️</span> {event.latency_ms}ms
+                </p>
+              </div>
             )}
           </div>
         );

@@ -73,18 +73,19 @@ Extract structured metadata:
 Recommended chunking for policy documents:
 
 ```yaml
-chunk_size_tokens: 700
-chunk_overlap_tokens: 120
+chunk_size_tokens: 4000
+chunk_overlap_tokens: 500
 preserve_headings: true
 preserve_page_number: true
 split_by_section_first: true
 ```
 
-Do not split blindly every N characters. Prefer section-aware chunking.
+Do not split blindly every N characters. Prefer section-aware chunking. *Note: We use large 4000 character chunks to take advantage of massive LLM contexts, which significantly reduces API calls and avoids immediate rate-limiting.*
 
 ### Step 6: Embedding
 
-Generate embeddings for each chunk. Store embedding model and dimension with the chunk metadata. If embedding model changes, re-index all chunks.
+Generate embeddings for each chunk. Store embedding model and dimension with the chunk metadata. If embedding model changes, re-index all chunks. 
+*Note: The embedding pipeline has built-in automated exponential backoff. If it hits a `429 Quota Exceeded` error (e.g., from Google Gemini's 100 RPM limit), it will silently pause for 30 seconds and retry. See `12_INGESTION_OPTIMIZATION.md` for the full technical and layman's breakdown.*
 
 ### Step 7: Vector DB upsert
 

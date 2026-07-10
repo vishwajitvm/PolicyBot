@@ -32,5 +32,5 @@ async def health(request: Request) -> ApiResponse:
             message="Health check completed",
         )
     except Exception as exc:
-        logger.exception("Failed to perform health check")
+        logger.error("Failed to perform health check")
         return ApiResponse(success=False, message=str(exc))

@@ -30,7 +30,7 @@ class ConnectionManager:
             dead_connections = set()
             for connection in self.active_connections[job_id]:
                 try:
-                    await connection.send_text(json.dumps(message))
+                    await connection.send_text(json.dumps(message, default=str))
                 except Exception as e:
                     logger.error(f"Error sending WebSocket message: {e}")
                     dead_connections.add(connection)

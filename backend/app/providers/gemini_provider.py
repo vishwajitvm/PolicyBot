@@ -44,16 +44,22 @@ class GeminiProvider(BaseLLMProvider, BaseEmbeddingProvider):
         )
 
     async def embed_texts(self, texts: list[str]) -> list[list[float]]:
-        vectors: list[list[float]] = []
-        for text in texts:
-            result = await asyncio.to_thread(
-                self._genai.embed_content,
-                model=self.settings.gemini_embedding_model,
-                content=text,
-                task_type="retrieval_document",
-            )
-            vectors.append(result["embedding"])
-        return vectors
+        # Use batching natively supported by the Gemini SDK
+        for attempt in range(5):
+            try:
+                result = await asyncio.to_thread(
+                    self._genai.embed_content,
+                    model=self.settings.gemini_embedding_model,
+                    content=texts,
+                    task_type="retrieval_document",
+                )
+                # The result["embedding"] is a list of embeddings when content is a list
+                return result["embedding"]
+            except Exception as e:
+                if "429" in str(e) and attempt < 4:
+                    await asyncio.sleep(30)
+                else:
+                    raise e
 
     async def embed_query(self, query: str) -> list[float]:
         result = await asyncio.to_thread(

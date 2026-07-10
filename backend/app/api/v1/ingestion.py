@@ -13,8 +13,7 @@ from app.providers.provider_factory import ProviderFactory
 from app.schemas.common import ApiResponse
 from app.schemas.ingestion import IngestionJobCreate
 from app.websocket_manager import manager
-
-
+from app.ingestion.cancellation import cancel_job
 
 router = APIRouter(prefix="/ingestion")
 
@@ -39,7 +38,7 @@ async def run_ingestion_task(source_id: str, request: Request):
         service = IngestionService(mongodb.db(), settings, embedding, request.app.state.vector_store)
         await service.run_for_source(source_id)
     except Exception as exc:
-        logger.exception("Background ingestion task failed for source_id %s", source_id)
+        logger.error("Background ingestion task failed for source_id %s", source_id)
         # The job should already be updated to failed by the service, but just in case
         job = IngestionJobService().create(source_id).model_dump()
         job.update({
@@ -55,6 +54,7 @@ async def run_ingestion_task(source_id: str, request: Request):
 
 @router.post("/jobs", response_model=ApiResponse)
 async def create_job(payload: IngestionJobCreate, request: Request, background_tasks: BackgroundTasks) -> ApiResponse:
+    logger.info(f"Received request to start ingestion job for source_id: {payload.source_id}")
     try:
         # Create the job initially
         job_service = IngestionJobService()
@@ -70,7 +70,7 @@ async def create_job(payload: IngestionJobCreate, request: Request, background_t
         job = _sanitize_for_json(job.model_dump())
         return ApiResponse(data=job, message="Ingestion job started")
     except Exception as exc:
-        logger.exception("Failed to create ingestion job for source_id %s", payload.source_id)
+        logger.error("Failed to create ingestion job for source_id %s", payload.source_id)
         # Create a failed job object
         job = IngestionJobService().create(payload.source_id).model_dump()
         job.update({
@@ -88,17 +88,19 @@ async def create_job(payload: IngestionJobCreate, request: Request, background_t
 
 @router.get("/jobs", response_model=ApiResponse)
 async def list_jobs() -> ApiResponse:
+    logger.info("Received request to list ingestion jobs")
     try:
         jobs = await IngestionJobRepository(mongodb.db()).find_many()
         jobs = [_sanitize_for_json(j) for j in jobs]
         return ApiResponse(data=jobs, message="Jobs retrieved")
     except Exception as exc:
-        logger.exception("Failed to list ingestion jobs")
+        logger.error("Failed to list ingestion jobs")
         return ApiResponse(success=False, message=str(exc))
 
 
 @router.get("/jobs/{job_id}", response_model=ApiResponse)
 async def get_job(job_id: str) -> ApiResponse:
+    logger.info(f"Received request to get ingestion job: {job_id}")
     try:
         job = await IngestionJobRepository(mongodb.db()).get(job_id)
         if job is None:
@@ -107,19 +109,46 @@ async def get_job(job_id: str) -> ApiResponse:
         job = _sanitize_for_json(job)
         return ApiResponse(data=job, message="Job retrieved")
     except Exception as exc:
-        logger.exception("Failed to get job")
+        logger.error("Failed to get job")
+        return ApiResponse(success=False, message=str(exc))
+
+
+@router.post("/jobs/{job_id}/cancel", response_model=ApiResponse)
+async def cancel_ingestion_job(job_id: str) -> ApiResponse:
+    logger.info(f"Received request to cancel ingestion job: {job_id}")
+    try:
+        # Attempt to signal the running asyncio background task
+        signaled = cancel_job(job_id)
+        
+        # Also mark the job in the database as cancelled
+        job = await IngestionJobRepository(mongodb.db()).get(job_id)
+        if job and job.get("status") in ["queued", "running"]:
+            job["status"] = "cancelled"
+            job["phase"] = "cancelled"
+            job["logs"].append("Job manually cancelled by user.")
+            job["updated_at"] = datetime.utcnow()
+            await IngestionJobRepository(mongodb.db()).upsert_one({"job_id": job_id}, job)
+            
+            # Broadcast the cancellation to listening WebSockets
+            from app.api.v1.ingestion import _sanitize_for_json
+            await manager.send_update(job_id, _sanitize_for_json(job))
+            
+        return ApiResponse(data={"signaled": signaled}, message="Job cancellation requested")
+    except Exception as exc:
+        logger.error(f"Failed to cancel job: {exc}")
         return ApiResponse(success=False, message=str(exc))
 
 
 @router.websocket("/ws/{job_id}")
 async def websocket_endpoint(websocket: WebSocket, job_id: str):
     """WebSocket endpoint for real-time job updates."""
+    logger.info(f"New WebSocket connection requested for job_id: {job_id}")
     await manager.connect(websocket, job_id)
     try:
         # Send the current job state immediately upon connection
         job = await IngestionJobRepository(mongodb.db()).get(job_id)
         if job:
-            await websocket.send_text(json.dumps(_sanitize_for_json(job.model_dump())))
+            await websocket.send_text(json.dumps(_sanitize_for_json(job), default=str))
         else:
             # Job not found, send error and close
             await websocket.send_text(json.dumps({

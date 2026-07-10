@@ -21,7 +21,7 @@ async def list_sources() -> ApiResponse:
         repo = SourceRepository(mongodb.db())
         return ApiResponse(data=await repo.list(), message="Sources retrieved")
     except Exception as exc:
-        logger.exception("Failed to list sources")
+        logger.error("Failed to list sources")
         return ApiResponse(success=False, message=str(exc))
 
 
@@ -36,9 +36,10 @@ async def create_local_source(payload: SourceCreateLocal) -> ApiResponse:
             metadata={"folder_path": payload.folder_path},
         ).model_dump()
         await SourceRepository(mongodb.db()).insert_one(source)
+        source.pop("_id", None)
         return ApiResponse(data=source, message="Local folder source created")
     except Exception as exc:
-        logger.exception("Failed to create local source")
+        logger.error("Failed to create local source")
         return ApiResponse(success=False, message=str(exc))
 
 
@@ -53,9 +54,10 @@ async def create_drive_source(payload: SourceCreateDrive) -> ApiResponse:
             metadata=payload.model_dump(),
         ).model_dump()
         await SourceRepository(mongodb.db()).insert_one(source)
+        source.pop("_id", None)
         return ApiResponse(data=source, message="Google Drive source created")
     except Exception as exc:
-        logger.exception("Failed to create Google Drive source")
+        logger.error("Failed to create Google Drive source")
         return ApiResponse(success=False, message=str(exc))
 
 
@@ -69,5 +71,5 @@ async def delete_source(source_id: str) -> ApiResponse:
     except NotFoundError:
         raise  # Let the global exception handler turn this into a 404
     except Exception as exc:
-        logger.exception("Failed to delete source")
+        logger.error("Failed to delete source")
         return ApiResponse(success=False, message=str(exc))

@@ -43,34 +43,37 @@ class LocalProvider(BaseLLMProvider, BaseEmbeddingProvider):
             logger.error(f"Ollama generation HTTP error: {exc.response.status_code} - {exc.response.text}")
             raise NotConfiguredError(f"Ollama generation failed: {exc.response.status_code}") from exc
         except httpx.RequestError as exc:
-            logger.exception("Ollama generation request failed")
+            logger.error("Ollama generation request failed")
             raise NotConfiguredError(f"Ollama generation failed: {str(exc)}") from exc
         except Exception as exc:
-            logger.exception("Failed to generate text with Ollama")
+            logger.error("Failed to generate text with Ollama")
             raise NotConfiguredError(f"Ollama generation failed: {exc}") from exc
 
     async def embed_texts(self, texts: list[str]) -> list[list[float]]:
         try:
+            import asyncio
             client = await self._get_client()
-            embeddings = []
-            for text in texts:
+            
+            async def embed_single(text: str) -> list[float]:
                 payload = {
                     "model": self.settings.ollama_embedding_model,
                     "prompt": text,
                 }
-                response = await client.post("/api/embeddings", json=payload)
-                response.raise_for_status()
-                result = response.json()
-                embeddings.append(result["embedding"])
+                resp = await client.post("/api/embeddings", json=payload)
+                resp.raise_for_status()
+                return resp.json()["embedding"]
+
+            # Run all embedding requests concurrently
+            embeddings = await asyncio.gather(*(embed_single(text) for text in texts))
             return embeddings
         except httpx.HTTPStatusError as exc:
             logger.error(f"Ollama embedding HTTP error: {exc.response.status_code} - {exc.response.text}")
             raise NotConfiguredError(f"Ollama embedding failed: {exc.response.status_code}") from exc
         except httpx.RequestError as exc:
-            logger.exception("Ollama embedding request failed")
+            logger.error("Ollama embedding request failed")
             raise NotConfiguredError(f"Ollama embedding failed: {str(exc)}") from exc
         except Exception as exc:
-            logger.exception("Failed to embed texts with Ollama")
+            logger.error("Failed to embed texts with Ollama")
             raise NotConfiguredError(f"Ollama embedding failed: {exc}") from exc
 
     async def embed_query(self, query: str) -> list[float]:

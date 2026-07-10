@@ -20,7 +20,7 @@ async def query(payload: QueryRequest, request: Request) -> ApiResponse:
         response = await graph.run(payload.question, payload.session_id, payload.filters)
         return ApiResponse(data=response.model_dump(), message="Query processed")
     except Exception as exc:
-        logger.exception("Failed to process query")
+        logger.error("Failed to process query")
         return ApiResponse(success=False, message=str(exc))
 
 
@@ -30,7 +30,7 @@ async def list_sessions() -> ApiResponse:
         cursor = mongodb.db()["query_sessions"].find({}, {"_id": 0}).limit(50)
         return ApiResponse(data=[item async for item in cursor], message="Sessions retrieved")
     except Exception as exc:
-        logger.exception("Failed to list sessions")
+        logger.error("Failed to list sessions")
         return ApiResponse(success=False, message=str(exc))
 
 
@@ -40,5 +40,5 @@ async def get_session(session_id: str) -> ApiResponse:
         item = await mongodb.db()["query_sessions"].find_one({"session_id": session_id}, {"_id": 0})
         return ApiResponse(data=item, message="Session retrieved")
     except Exception as exc:
-        logger.exception("Failed to get session")
+        logger.error("Failed to get session")
         return ApiResponse(success=False, message=str(exc))

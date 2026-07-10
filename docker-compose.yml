@@ -20,7 +20,7 @@ services:
       - backend_logs:/app/logs
       - C:/Users/vishw/Downloads/policybot_test_dataset:/app/data/policies
       - ./backend:/app:cached
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     depends_on:
       - qdrant
 

@@ -30,8 +30,8 @@ class ChatMessageBase(BaseModel):
     content: str
 
 
-class ChatMessageCreate(ChatMessageBase):
-    question: str  # For sending a message, we expect a question
+class ChatMessageCreate(BaseModel):
+    question: str
 
 
 class ChatMessageOut(BaseModel):

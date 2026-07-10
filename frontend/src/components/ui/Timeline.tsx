@@ -18,7 +18,7 @@ function formatJSONSummary(summary: Record<string, unknown>): string {
 function getStepIcon(step: string): string {
   const stepLower = step.toLowerCase();
   if (stepLower.includes('query')) return '🔍';
-  if (stepLower.includes('retriev') || stepLower.includes('candidate')) return '📄';
+  if (stepLower.includes('retriev') || stepLower.includes('chunk')) return '📄';
   if (stepLower.includes('embed')) return '🧠';
   if (stepLower.includes('rerank')) return '📊';
   if (stepLower.includes('freshness')) return '⏰';

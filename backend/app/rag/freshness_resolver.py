@@ -22,8 +22,8 @@ class FreshnessResolver:
         selected = sorted(candidates, key=freshness_key, reverse=True)
         decision = {
             "strategy": "prefer_latest_valid_document",
-            "candidate_count": len(candidates),
+            "chunk_count": len(candidates),
             "selected_chunk_ids": [item.chunk_id for item in selected[:5]],
-            "explanation": "Candidates were ordered by modified_at, version, then retrieval score.",
+            "explanation": "Chunks were ordered by modified_at, version, then retrieval score.",
         }
         return selected, decision

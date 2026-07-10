@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { Header } from "../components/layout/Header";
 import { Sidebar } from "../components/layout/Sidebar";
 import { Footer } from "../components/layout/Footer";
 
 export function AppLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const location = useLocation();
+  const isChatPage = location.pathname.startsWith('/chat');
 
   return (
     <div
@@ -30,7 +32,7 @@ export function AppLayout() {
         <Outlet />
       </main>
 
-      <footer className="col-span-2 min-w-0 border-t border-border bg-panel">
+      <footer className={`col-span-2 min-w-0 ${isChatPage ? 'bg-[#0f111a] border-transparent' : 'border-t border-border bg-panel'}`}>
         <Footer />
       </footer>
     </div>

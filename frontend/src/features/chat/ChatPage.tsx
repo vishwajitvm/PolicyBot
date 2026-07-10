@@ -319,8 +319,8 @@ export function ChatPageFeature() {
           )}
         </header>
 
-        <div className="min-h-0 flex-1 overflow-y-auto z-10 scroll-smooth pb-10">
-          <div className="mx-auto max-w-4xl space-y-8 px-4 py-8">
+        <div className="min-h-0 flex-1 overflow-y-auto z-10 scroll-smooth pb-4">
+          <div className="mx-auto max-w-4xl space-y-8 px-4 pt-8 pb-4">
             {currentSessionId ? (
                currentSessionQuery.isLoading ? (
                   <div className="py-12 text-center"><Spinner className="mx-auto" /></div>
@@ -406,7 +406,7 @@ export function ChatPageFeature() {
         </div>
 
         {currentSessionId && (
-          <div className="shrink-0 pt-4 pb-6 px-4 z-20">
+          <div className="shrink-0 pt-2 pb-0 px-4 z-20">
             <ChatInput onAsk={handleSendMessage} pending={sendMessageMutation.isPending} />
           </div>
         )}
@@ -459,7 +459,7 @@ export function ChatPageFeature() {
       </Modal>
 
       {/* Trace modal */}
-      <Modal open={openTraceModal} onClose={handleCloseTraceModal} className="w-[95%] max-w-6xl">
+      <Modal open={openTraceModal} onClose={handleCloseTraceModal} className="w-[95%] max-w-6xl h-[70vh] max-h-[70vh]">
         <div className="px-6 py-4 pt-8">
           <div className="mb-6 flex items-center justify-between">
             <div className="flex items-center gap-3">

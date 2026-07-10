@@ -10,8 +10,14 @@ export function Modal({
 }: PropsWithChildren<{ open: boolean; onClose: () => void; className?: string }>) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-      <div className={`relative flex flex-col max-h-[90vh] rounded-2xl border border-white/10 bg-gray-900 shadow-2xl ${className}`}>
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div 
+        className={`relative flex flex-col max-h-[90vh] rounded-2xl border border-white/10 bg-gray-900 shadow-2xl ${className}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="absolute right-4 top-4 z-10">
           <Button 
             variant="ghost" 

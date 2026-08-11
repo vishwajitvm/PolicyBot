@@ -8,6 +8,7 @@ import { LogsPage } from "../pages/LogsPage";
 import { SettingsPage } from "../pages/SettingsPage";
 import { SourcesPage } from "../pages/SourcesPage";
 import { TracePage } from "../pages/TracePage";
+import { ModelManagerPage } from "../pages/ModelManagerPage";
 
 export const router = createBrowserRouter([
   {
@@ -22,7 +23,8 @@ export const router = createBrowserRouter([
       { path: "traces/:traceId", element: <TracePage /> },
       { path: "evaluation", element: <EvaluationPage /> },
       { path: "settings", element: <SettingsPage /> },
-      { path: "logs", element: <LogsPage /> }
+      { path: "logs", element: <LogsPage /> },
+      { path: "models", element: <ModelManagerPage /> }
     ]
   }
 ]);

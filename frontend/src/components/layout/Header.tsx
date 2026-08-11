@@ -9,7 +9,7 @@ import {
   DatabaseZap,
 } from "lucide-react";
 
-const themes: ThemeName[] = ["dark", "light", "blue", "red", "gradient", "custom"];
+const themes: ThemeName[] = ["dark", "light", "blue"];
 
 type HeaderProps = {
   sidebarCollapsed: boolean;

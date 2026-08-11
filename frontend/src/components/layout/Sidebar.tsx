@@ -20,6 +20,7 @@ const links = [
   { to: "/evaluation", label: "Evaluation", icon: BarChart3 },
   { to: "/settings", label: "Settings", icon: Settings },
   { to: "/logs", label: "Logs", icon: Bot },
+  { to: "/models", label: "Models & Config", icon: Database },
 ];
 
 type SidebarProps = {
@@ -28,7 +29,7 @@ type SidebarProps = {
 
 export function Sidebar({ collapsed = false }: SidebarProps) {
   return (
-    <aside className="flex h-full flex-col bg-panel">
+    <div className="flex h-full flex-col bg-transparent">
       <div
         className={cn(
           "flex h-20 flex-shrink-0 items-center border-b border-border px-5",
@@ -36,11 +37,13 @@ export function Sidebar({ collapsed = false }: SidebarProps) {
         )}
       >
         {collapsed ? (
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-sm font-bold text-white">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/20 border border-primary/50 text-sm font-bold text-primary text-glow-primary">
             PB
           </div>
         ) : (
-          <h1 className="text-lg font-bold text-text">PolicyBot Intelligence</h1>
+          <h1 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary text-glow">
+            PolicyBot Intelligence
+          </h1>
         )}
       </div>
 
@@ -52,17 +55,26 @@ export function Sidebar({ collapsed = false }: SidebarProps) {
             title={collapsed ? label : undefined}
             className={({ isActive }) =>
               cn(
-                "flex items-center rounded-md py-2.5 text-sm font-medium text-muted transition hover:bg-surface hover:text-text",
-                collapsed ? "justify-center px-2" : "gap-3 px-4",
-                isActive && "bg-primary text-white hover:bg-primary hover:text-white"
+                "flex items-center rounded-lg py-3 text-sm font-medium transition-all duration-300 relative overflow-hidden group",
+                collapsed ? "justify-center px-2" : "gap-4 px-4",
+                isActive 
+                  ? "bg-primary/10 text-primary border border-primary/20 shadow-[inset_0_0_15px_rgba(0,220,200,0.1)]" 
+                  : "text-muted hover:bg-surface hover:text-text"
               )
             }
           >
-            <Icon size={18} />
-            {!collapsed && <span>{label}</span>}
+            {({ isActive }) => (
+              <>
+                <Icon size={20} className={cn("transition-transform group-hover:scale-110", isActive && "text-glow-primary")} />
+                {!collapsed && <span className="z-10">{label}</span>}
+                
+                {/* Hover highlight effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/10 to-primary/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 z-0"></div>
+              </>
+            )}
           </NavLink>
         ))}
       </nav>
-    </aside>
+    </div>
   );
 }

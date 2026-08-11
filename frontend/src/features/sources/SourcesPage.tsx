@@ -10,18 +10,30 @@ import { DrivePickerModal } from "./DrivePickerModal";
 import { GoogleDriveConnectButton } from "./GoogleDriveConnectButton";
 import { LocalFolderSourceCard } from "./LocalFolderSourceCard";
 import { SelectedDriveSourceCard } from "./SelectedDriveSourceCard";
+import { IngestionTracker } from "./IngestionTracker";
 
 export function SourcesPageFeature() {
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [activeJobId, setActiveJobId] = useState<string | null>(null);
   const { data = [] } = useQuery({ queryKey: ["sources"], queryFn: listSources, retry: false });
   const queryClient = useQueryClient();
   const remove = useMutation({ mutationFn: deleteSource, onSuccess: () => queryClient.invalidateQueries({ queryKey: ["sources"] }) });
   const ingest = useMutation({
     mutationFn: startIngestion,
-    onSuccess: () => {
+    onSuccess: (job) => {
       queryClient.invalidateQueries({ queryKey: ["ingestion-jobs"] });
+      setActiveJobId(job.job_id);
     },
   });
+
+  if (activeJobId) {
+    return (
+      <div className="space-y-5">
+        <IngestionTracker jobId={activeJobId} onClose={() => setActiveJobId(null)} />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-5">
       <div className="grid gap-4 lg:grid-cols-2">
@@ -41,7 +53,7 @@ export function SourcesPageFeature() {
                 <div><strong>{source.name}</strong><p className="text-sm text-muted">{source.source_type} · {source.status}</p></div>
                 <div className="flex gap-2">
                   <Button disabled={ingest.isPending} onClick={() => ingest.mutate(source.source_id)}>
-                    {ingest.isPending ? (
+                    {ingest.isPending && ingest.variables === source.source_id ? (
                       <>
                         <UploadCloud size={16} className="mr-2 h-4 w-4 animate-spin" />
                         Ingesting...

@@ -1,3 +1,4 @@
+from tracenest import logger
 from app.core.config import Settings
 from app.core.exceptions import NotConfiguredError
 from app.providers.anthropic_provider import AnthropicProvider

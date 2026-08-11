@@ -54,14 +54,19 @@ class LocalProvider(BaseLLMProvider, BaseEmbeddingProvider):
             import asyncio
             client = await self._get_client()
             
+            # Throttle to 5 concurrent requests to avoid overwhelming local Ollama
+            sem = asyncio.Semaphore(5)
+            
             async def embed_single(text: str) -> list[float]:
-                payload = {
-                    "model": self.settings.ollama_embedding_model,
-                    "prompt": text,
-                }
-                resp = await client.post("/api/embeddings", json=payload)
-                resp.raise_for_status()
-                return resp.json()["embedding"]
+                async with sem:
+                    payload = {
+                        "model": self.settings.ollama_embedding_model,
+                        "prompt": text,
+                    }
+                    # Large timeout since local models can be slow under load
+                    resp = await client.post("/api/embeddings", json=payload, timeout=300.0)
+                    resp.raise_for_status()
+                    return resp.json()["embedding"]
 
             # Run all embedding requests concurrently
             embeddings = await asyncio.gather(*(embed_single(text) for text in texts))

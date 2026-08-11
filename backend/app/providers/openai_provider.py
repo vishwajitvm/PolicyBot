@@ -114,32 +114,41 @@ class OpenAIProvider(BaseLLMProvider, BaseEmbeddingProvider):
             "input": texts
         }
         
+        if self.provider_name == "openai" and "text-embedding-3" in embedding_model:
+            if hasattr(self.settings, "qdrant_vector_size") and self.settings.qdrant_vector_size:
+                payload["dimensions"] = self.settings.qdrant_vector_size
+        
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
         }
         
+        import asyncio
         async with httpx.AsyncClient(timeout=60.0) as client:
-            response = await client.post(
-                f"{self.base_url}/embeddings",
-                headers=headers,
-                json=payload
-            )
-            
-            if response.status_code != 200:
-                logger.error(f"{self.provider_name} Embedding API Error {response.status_code}: {response.text}")
-                raise Exception(f"{self.provider_name} Embedding API returned {response.status_code}: {response.text}")
+            for attempt in range(4):
+                response = await client.post(
+                    f"{self.base_url}/embeddings",
+                    headers=headers,
+                    json=payload
+                )
                 
-            data = response.json()
-            # The API returns a list of objects containing the embedding
-            # e.g., data["data"][0]["embedding"]
-            embeddings = []
-            # Make sure we sort by index just in case the API returned them out of order
-            sorted_data = sorted(data["data"], key=lambda x: x["index"])
-            for item in sorted_data:
-                embeddings.append(item["embedding"])
-                
-            return embeddings
+                if response.status_code == 429 and attempt < 3:
+                    await asyncio.sleep(2 ** attempt)
+                    continue
+                elif response.status_code != 200:
+                    logger.error(f"{self.provider_name} Embedding API Error {response.status_code}: {response.text}")
+                    raise Exception(f"{self.provider_name} Embedding API returned {response.status_code}: {response.text}")
+                    
+                data = response.json()
+                # The API returns a list of objects containing the embedding
+                # e.g., data["data"][0]["embedding"]
+                embeddings = []
+                # Make sure we sort by index just in case the API returned them out of order
+                sorted_data = sorted(data["data"], key=lambda x: x["index"])
+                for item in sorted_data:
+                    embeddings.append(item["embedding"])
+                    
+                return embeddings
 
     async def embed_query(self, query: str) -> list[float]:
         embeddings = await self.embed_texts([query])

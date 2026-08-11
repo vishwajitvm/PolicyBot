@@ -30,13 +30,13 @@ def _sanitize_for_json(obj):
         return obj
 
 
-async def run_ingestion_task(source_id: str, request: Request):
+async def run_ingestion_task(source_id: str, job_id: str, request: Request):
     """Background task to run ingestion for a source."""
     try:
         settings = request.app.state.settings
         embedding = ProviderFactory(settings).create_embedding()
         service = IngestionService(mongodb.db(), settings, embedding, request.app.state.vector_store)
-        await service.run_for_source(source_id)
+        await service.run_for_source(source_id, job_id=job_id)
     except Exception as exc:
         logger.error(f"Background ingestion task failed for source_id {source_id}")
         # The job should already be updated to failed by the service, but just in case
@@ -64,7 +64,7 @@ async def create_job(payload: IngestionJobCreate, request: Request, background_t
         await IngestionJobRepository(mongodb.db()).insert_one(job.model_dump())
 
         # Start the ingestion in the background
-        background_tasks.add_task(run_ingestion_task, payload.source_id, request)
+        background_tasks.add_task(run_ingestion_task, payload.source_id, job.job_id, request)
 
         # Return the job immediately
         job = _sanitize_for_json(job.model_dump())

@@ -133,7 +133,7 @@ class IngestionService:
             logger.error(f"Batch embedding/indexing failed: {e}")
             raise e
 
-    async def run_for_source(self, source_id: str) -> dict:
+    async def run_for_source(self, source_id: str, job_id: str = None) -> dict:
         job = None
         start_time = time.time()
         try:
@@ -141,13 +141,18 @@ class IngestionService:
             if not source:
                 raise ValueError(f"Unknown source_id {source_id}")
 
-            # Create job
-            job = self.job_service.create(source_id).model_dump()
-            job["source_name"] = source.get("name")
-            job["status"] = "queued"
-            job["phase"] = "queued"
-            job["logs"] = [self._timestamped_log("Ingestion started")]
-            await self.jobs.insert_one(job)
+            if job_id:
+                job = await self.jobs.find_one({"job_id": job_id})
+                if not job:
+                    raise ValueError(f"Unknown job_id {job_id}")
+            else:
+                # Create job
+                job = self.job_service.create(source_id).model_dump()
+                job["source_name"] = source.get("name")
+                job["status"] = "queued"
+                job["phase"] = "queued"
+                job["logs"] = [self._timestamped_log("Ingestion started")]
+                await self.jobs.insert_one(job)
 
             await self._update_job_progress(
                 job["job_id"],
@@ -219,6 +224,14 @@ class IngestionService:
                     batch = []
                     batch_size = 50  # Process chunks in batches of 50 for optimal performance
                     
+                    tasks = []
+                    # ORCHESTRATOR: process batches sequentially to respect provider rate limits (15 RPM free tier)
+                    semaphore = asyncio.Semaphore(1)
+                    
+                    async def bounded_embed(b, did, sid, meta, jid, lgs):
+                        async with semaphore:
+                            return await self._embed_and_index_batch(b, did, sid, meta, jid, lgs)
+                    
                     async for text_part in self.loader.load_chunks(item.path):
                         if not text_part.strip():
                             continue
@@ -239,12 +252,9 @@ class IngestionService:
                                 await self._update_job_progress(
                                     job["job_id"],
                                     phase="embedding",
-                                    logs=[*logs, self._timestamped_log(f"Processing batch of {len(batch)} chunks for {current_file_name}")]
+                                    logs=[*logs, self._timestamped_log(f"Queuing batch of {len(batch)} chunks for {current_file_name}")]
                                 )
-                                processed = await self._embed_and_index_batch(batch, document_id, source_id, metadata, job["job_id"], logs)
-                                embedded_chunks += processed
-                                indexed_chunks += processed
-                                total_chunks += processed
+                                tasks.append(asyncio.create_task(bounded_embed(batch, document_id, source_id, metadata, job["job_id"], logs)))
                                 batch = []
                                 
                     # Process remaining batch
@@ -252,12 +262,19 @@ class IngestionService:
                         await self._update_job_progress(
                             job["job_id"],
                             phase="embedding",
-                            logs=[*logs, self._timestamped_log(f"Processing final batch of {len(batch)} chunks for {current_file_name}")]
+                            logs=[*logs, self._timestamped_log(f"Queuing final batch of {len(batch)} chunks for {current_file_name}")]
                         )
-                        processed = await self._embed_and_index_batch(batch, document_id, source_id, metadata, job["job_id"], logs)
-                        embedded_chunks += processed
-                        indexed_chunks += processed
-                        total_chunks += processed
+                        tasks.append(asyncio.create_task(bounded_embed(batch, document_id, source_id, metadata, job["job_id"], logs)))
+
+                    if tasks:
+                        results = await asyncio.gather(*tasks, return_exceptions=True)
+                        for r in results:
+                            if isinstance(r, Exception):
+                                raise r
+                        processed_total = sum(results)
+                        embedded_chunks += processed_total
+                        indexed_chunks += processed_total
+                        total_chunks += processed_total
 
                     logs = [*logs, self._timestamped_log(f"Successfully processed {current_file_name} ({document_chunk_count} chunks)")]
                     processed_documents += 1

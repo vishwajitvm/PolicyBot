@@ -9,8 +9,10 @@ This package is a complete documentation and architecture starter pack for build
 - Added a dedicated **Vector Database Strategy**. RAG is not complete without a proper vector store.
 - Added recommended free/low-cost vector DB options: **Qdrant**, **Pinecone**, **Chroma**, and **MongoDB Atlas Vector Search** as an optional combined-store strategy.
 - Added detailed setup, Docker, deployment, environment config, commands, DB schema, API contracts, scoring, logging, tracing, and operations docs.
+- Added a highly scalable **Multi-Model Fallback Architecture** supporting 8 LLM providers (Gemini, Nvidia, Groq, OpenAI, Ollama, HuggingFace, Mistral, Deepseek) automatically switching to prevent downtime or rate limits.
+- Upgraded ingestion pipeline for **ultra-fast parallel vector embeddings** via async batching (processing 100-page PDFs in seconds).
+- Integrated an extensive **LLM Analytics Dashboard** tracking tokens, latency, and error rates via Recharts and MongoDB.
 - Added Word `.docx` versions of the Markdown documents in `docs/word/`.
-- Updated all backend, frontend, and full-stack diagrams to include vector DB, queues, traces, and model-provider switching.
 - Added Docker and config templates in `templates/`.
 
 ## Recommended architecture choice

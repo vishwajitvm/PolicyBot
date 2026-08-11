@@ -133,3 +133,13 @@ Before switching provider:
 - [ ] Compare latency.
 - [ ] Compare cost.
 - [ ] Re-index if embedding provider changed.
+
+## 11. Automatic Fallback Architecture (New)
+
+The system now supports an automatic multi-provider fallback mechanism to guarantee extremely high availability and mitigate provider-specific rate limits. 
+
+When a generation or embedding request is initiated, the system loops through a predefined sequence of fallback providers configured via `.env` (e.g. `gemini -> nvidia -> groq -> openai -> ollama -> huggingface -> mistral -> deepseek`).
+
+If the primary provider throws an HTTP error, timeouts, or rate limits, the `FallbackLLMProvider` automatically logs the failure to the MongoDB usage metrics store, swallows the exception, and attempts the exact same prompt on the next provider in the chain.
+
+A comprehensive UI Dashboard and Model Manager exist on the frontend to visualize tokens consumed by model, average latency, and fallback error rates to help tune the priority sequence.

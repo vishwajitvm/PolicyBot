@@ -27,7 +27,7 @@ async def drive_config() -> ApiResponse:
             message="Drive config retrieved"
         )
     except Exception as exc:
-        logger.exception("Failed to get drive config")
+        logger.error("Failed to get drive config")
         return ApiResponse(success=False, message=str(exc))
 
 
@@ -47,7 +47,7 @@ async def oauth_start():
         )
         return RedirectResponse(f"https://accounts.google.com/o/oauth2/v2/auth?{query}")
     except Exception as exc:
-        logger.exception("Failed to start OAuth")
+        logger.error("Failed to start OAuth")
         # We still need to return a RedirectResponse, but in case of error, we redirect to an error page?
         # For simplicity, we'll redirect to the frontend with an error? But we don't know the frontend URL.
         # Let's redirect to the root with a query parameter indicating error.
@@ -65,7 +65,7 @@ async def oauth_callback(code: str | None = None) -> ApiResponse:
     try:
         return ApiResponse(data={"code_received": bool(code)}, message="OAuth callback wired; token exchange storage is not implemented yet")
     except Exception as exc:
-        logger.exception("Failed to process OAuth callback")
+        logger.error("Failed to process OAuth callback")
         return ApiResponse(success=False, message=str(exc))
 
 
@@ -87,7 +87,7 @@ async def picker_selection(payload: PickerSelection) -> ApiResponse:
             await mongodb.db()["sources"].insert_many(sources)
         return ApiResponse(data={"selected": len(payload.items)}, message="Sources selected")
     except Exception as exc:
-        logger.exception("Failed to process picker selection")
+        logger.error("Failed to process picker selection")
         return ApiResponse(success=False, message=str(exc))
 
 
@@ -96,7 +96,7 @@ async def folder_sync(payload: FolderSyncRequest) -> ApiResponse:
     try:
         return ApiResponse(data=payload.model_dump(), message="Google Drive folder sync structure is wired; download/export worker is pending")
     except Exception as exc:
-        logger.exception("Failed to process folder sync")
+        logger.error("Failed to process folder sync")
         return ApiResponse(success=False, message=str(exc))
 
 
@@ -106,5 +106,5 @@ async def drive_sources() -> ApiResponse:
         cursor = mongodb.db()["sources"].find({"source_type": "google_drive"}, {"_id": 0}).limit(100)
         return ApiResponse(data=[item async for item in cursor], message="Drive sources retrieved")
     except Exception as exc:
-        logger.exception("Failed to list drive sources")
+        logger.error("Failed to list drive sources")
         return ApiResponse(success=False, message=str(exc))

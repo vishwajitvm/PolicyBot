@@ -16,63 +16,51 @@ export function RetrievedChunkCard({ chunk }: { chunk: Record<string, unknown> }
   const page = metadata?.page ?? metadata?.page_number ?? undefined;
 
   return (
-    <Card className="border hover:border-primary/20 transition-border">
-      <div className="flex items-start gap-4 p-4">
-        {/* Badge with score */}
-        <div className="flex-shrink-0 mt-0.5">
-          <Badge variant={score >= 0.8 ? "success" : score >= 0.6 ? "warning" : "destructive"}>
-            {score.toFixed(3)}
-          </Badge>
-        </div>
-
-        {/* Chunk details */}
-        <div className="flex-1 space-y-2">
-          <div className="flex items-center justify-between mb-1">
-            <h4 className="font-semibold text-text truncate max-w-[200px]">
-              Chunk: {chunkId.slice(0, 8)}...
-            </h4>
-            <span className="text-xs text-muted">{source}</span>
-            {page !== undefined && (
-              <span className="text-xs text-muted ml-2">p. {page}</span>
-            )}
+    <Card className="border-white/5 bg-white/5 backdrop-blur-sm rounded-xl overflow-hidden hover:bg-white/10 hover:border-white/10 transition-all shadow-lg">
+      <div className="flex flex-col h-full">
+        <div className="flex items-start gap-4 p-5">
+          {/* Badge with score */}
+          <div className="flex-shrink-0 mt-0.5">
+            <Badge className={`${score >= 0.8 ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30" : score >= 0.6 ? "bg-amber-500/20 text-amber-300 border-amber-500/30" : "bg-red-500/20 text-red-300 border-red-500/30"} font-mono`}>
+              {score.toFixed(3)}
+            </Badge>
           </div>
 
-          {/* Content with expand/collapse */}
-          <div className="max-h-[200px] overflow-y-auto text-sm text-muted leading-relaxed">
-            {truncateText(text, 500)}
-          </div>
-
-          {/* Metadata */}
-          {Object.keys(metadata).length > 0 && (
-            <div className="mt-2 pt-2 border-t border-border/50">
-              <p className="font-medium text-sm mb-1">Metadata:</p>
-              <div className="text-xs text-muted space-y-1">
-                {Object.entries(metadata).map(([key, value]) => (
-                  <div key={key} className="flex justify-between">
-                    <span className="font-medium">{String(key)}:</span>
-                    <span className="truncate max-w-[200px]">{String(value)}</span>
-                  </div>
-                ))}
+          {/* Chunk details */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="font-semibold text-white truncate pr-2">
+                Chunk {chunkId.slice(0, 8)}
+              </h4>
+              <div className="flex flex-col items-end shrink-0">
+                <span className="text-[10px] uppercase tracking-wider text-indigo-400 font-semibold truncate max-w-[120px]">{String(source).split('/').pop()}</span>
+                {page !== undefined && (
+                  <span className="text-[10px] text-gray-500 font-medium">p. {page}</span>
+                )}
               </div>
             </div>
-          )}
-        </div>
-      </div>
 
-      {/* Footer with actions */}
-      <div className="flex items-center justify-between p-3 pt-0 border-t border-border/50">
-        <button
-          onClick={() => {
-            // In a real app, this might open a modal with full text
-            alert("Full chunk text:\n\n" + text);
-          }}
-          className="text-xs text-primary hover:text-primary/80 hover:underline"
-        >
-          View Full
-        </button>
-        <span className="text-xs text-muted">
-          {text.length} chars
-        </span>
+            {/* Content with expand/collapse */}
+            <div className="max-h-[160px] overflow-y-auto text-xs text-gray-300 leading-relaxed bg-black/20 p-3 rounded-lg border border-white/5 shadow-inner">
+              {truncateText(text, 600)}
+            </div>
+          </div>
+        </div>
+
+        {/* Footer with actions */}
+        <div className="mt-auto flex items-center justify-between px-5 py-3 border-t border-white/5 bg-black/20">
+          <button
+            onClick={() => {
+              alert("Full chunk text:\n\n" + text);
+            }}
+            className="text-xs text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
+          >
+            View Full Text
+          </button>
+          <span className="text-[10px] font-mono text-gray-500 tracking-wider">
+            {text.length} chars
+          </span>
+        </div>
       </div>
     </Card>
   );

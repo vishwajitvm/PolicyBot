@@ -20,5 +20,5 @@ async def get_trace(trace_id: str) -> ApiResponse:
     except NotFoundError:
         raise
     except Exception as exc:
-        logger.exception("Failed to get trace")
+        logger.error("Failed to get trace")
         return ApiResponse(success=False, message=str(exc))

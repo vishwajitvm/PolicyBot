@@ -19,7 +19,7 @@ async def create_dataset(payload: DatasetCreate) -> ApiResponse:
         await mongodb.db()["eval_datasets"].insert_one(dataset)
         return ApiResponse(data=dataset, message="Dataset created")
     except Exception as exc:
-        logger.exception("Failed to create dataset")
+        logger.error("Failed to create dataset")
         return ApiResponse(success=False, message=str(exc))
 
 
@@ -29,7 +29,7 @@ async def list_datasets() -> ApiResponse:
         cursor = mongodb.db()["eval_datasets"].find({}, {"_id": 0}).limit(100)
         return ApiResponse(data=[item async for item in cursor], message="Datasets retrieved")
     except Exception as exc:
-        logger.exception("Failed to list datasets")
+        logger.error("Failed to list datasets")
         return ApiResponse(success=False, message=str(exc))
 
 
@@ -38,7 +38,7 @@ async def run_evaluation(payload: EvaluationRunCreate) -> ApiResponse:
     try:
         return ApiResponse(data=await EvaluationService(mongodb.db()).run(payload.dataset_id), message="Evaluation run completed")
     except Exception as exc:
-        logger.exception("Failed to run evaluation")
+        logger.error("Failed to run evaluation")
         return ApiResponse(success=False, message=str(exc))
 
 
@@ -48,7 +48,7 @@ async def list_runs() -> ApiResponse:
         cursor = mongodb.db()["eval_runs"].find({}, {"_id": 0}).limit(100)
         return ApiResponse(data=[item async for item in cursor], message="Evaluation runs retrieved")
     except Exception as exc:
-        logger.exception("Failed to list evaluation runs")
+        logger.error("Failed to list evaluation runs")
         return ApiResponse(success=False, message=str(exc))
 
 
@@ -57,5 +57,5 @@ async def get_run(run_id: str) -> ApiResponse:
     try:
         return ApiResponse(data=await mongodb.db()["eval_runs"].find_one({"run_id": run_id}, {"_id": 0}), message="Evaluation run retrieved")
     except Exception as exc:
-        logger.exception("Failed to get evaluation run")
+        logger.error("Failed to get evaluation run")
         return ApiResponse(success=False, message=str(exc))

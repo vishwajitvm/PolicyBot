@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { Header } from "../components/layout/Header";
 import { Sidebar } from "../components/layout/Sidebar";
 import { Footer } from "../components/layout/Footer";
 
 export function AppLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const location = useLocation();
+  const isChatPage = location.pathname.startsWith('/chat');
 
   return (
     <div
@@ -13,9 +15,9 @@ export function AppLayout() {
         sidebarCollapsed
           ? "grid-cols-[4.5rem_minmax(0,1fr)]"
           : "grid-cols-[16rem_minmax(0,1fr)]"
-      } grid-rows-[5rem_minmax(0,1fr)_3rem]`}
+      } ${isChatPage ? 'grid-rows-[5rem_minmax(0,1fr)]' : 'grid-rows-[5rem_minmax(0,1fr)_3rem]'}`}
     >
-      <aside className="row-span-3 min-h-0 border-r border-border bg-panel">
+      <aside className="row-span-2 min-h-0 border-r border-border bg-panel">
         <Sidebar collapsed={sidebarCollapsed} />
       </aside>
 
@@ -26,13 +28,15 @@ export function AppLayout() {
         />
       </header>
 
-      <main className="min-h-0 min-w-0 overflow-auto p-4">
+      <main className="min-h-0 min-w-0 flex flex-col overflow-hidden">
         <Outlet />
       </main>
 
-      <footer className="min-w-0 border-t border-border bg-panel">
-        <Footer />
-      </footer>
+      {!isChatPage && (
+        <footer className="col-span-2 min-w-0 border-t border-border bg-panel">
+          <Footer />
+        </footer>
+      )}
     </div>
   );
 }

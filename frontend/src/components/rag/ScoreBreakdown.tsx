@@ -45,21 +45,21 @@ export function ScoreBreakdown({ scores }: { scores: Partial<QueryScores> }) {
   const overallScore = totalWeight > 0 ? weightedSum / totalWeight : 0;
 
   return (
-    <Card className="space-y-5">
-      <div className="mb-4">
-        <h3 className="font-semibold text-text">Score Breakdown</h3>
-        <div className="flex items-center justify-between mt-2">
-          <span className="text-muted">Overall Confidence:</span>
-          <span className={`font-bold text-text ${getScoreVariant(overallScore)}`}>
-            {(overallScore * 100).toFixed(1)}% ({getScoreLabel(overallScore)})
+    <Card className="border-white/5 bg-white/5 backdrop-blur-sm rounded-xl overflow-hidden hover:bg-white/10 transition-all shadow-lg p-5">
+      <div className="mb-6">
+        <h3 className="text-lg font-bold text-white tracking-wide">Score Breakdown</h3>
+        <div className="flex items-center justify-between mt-3">
+          <span className="text-sm font-medium text-gray-400 uppercase tracking-wider">Overall Confidence:</span>
+          <span className={`font-bold text-lg ${getScoreVariant(overallScore) === 'success' ? 'text-emerald-400' : getScoreVariant(overallScore) === 'warning' ? 'text-amber-400' : 'text-red-400'}`}>
+            {(overallScore * 100).toFixed(1)}% <span className="text-xs opacity-80 font-medium">({getScoreLabel(overallScore)})</span>
           </span>
         </div>
-        <div className="w-full bg-muted/50 rounded-md h-2.5 mt-1">
-          <div className={`bg-primary h-2.5 rounded-md`} style={{ width: `${overallScore * 100}%` }}></div>
+        <div className="w-full bg-black/40 rounded-full h-3 mt-3 overflow-hidden shadow-inner border border-white/5">
+          <div className={`h-full rounded-full transition-all duration-1000 ${getScoreVariant(overallScore) === 'success' ? 'bg-gradient-to-r from-emerald-500 to-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : getScoreVariant(overallScore) === 'warning' ? 'bg-gradient-to-r from-amber-500 to-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.5)]' : 'bg-gradient-to-r from-red-500 to-red-400 shadow-[0_0_10px_rgba(239,68,68,0.5)]'}`} style={{ width: `${overallScore * 100}%` }}></div>
         </div>
       </div>
 
-      <div className="grid gap-3">
+      <div className="grid gap-4 bg-black/20 p-4 rounded-xl border border-white/5 shadow-inner">
         <ScoreMeter
           label="Answer Confidence"
           value={scores.answer_confidence}
@@ -88,8 +88,8 @@ export function ScoreBreakdown({ scores }: { scores: Partial<QueryScores> }) {
       </div>
 
       {/* Explanation section */}
-      <div className="mt-4 pt-3 border-t border-border/50">
-        <p className="text-sm text-muted">
+      <div className="mt-5 pt-4 border-t border-white/5">
+        <p className="text-[11px] text-gray-500 font-medium leading-relaxed uppercase tracking-wider">
           Scores are calculated on a scale of 0-1 (0%-100%), where higher scores indicate better performance.
           The overall confidence is a weighted average of all individual scores.
         </p>

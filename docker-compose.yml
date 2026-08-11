@@ -8,6 +8,14 @@ services:
     volumes:
       - qdrant_data:/qdrant/storage
 
+  ollama:
+    image: ollama/ollama:latest
+    container_name: policybot-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+
   backend:
     build:
       context: ./backend
@@ -20,9 +28,10 @@ services:
       - backend_logs:/app/logs
       - C:/Users/vishw/Downloads/policybot_test_dataset:/app/data/policies
       - ./backend:/app:cached
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     depends_on:
       - qdrant
+      - ollama
 
   frontend:
     image: node:20-alpine
@@ -41,4 +50,5 @@ services:
 volumes:
   qdrant_data:
   backend_logs:
+  ollama_data:
 

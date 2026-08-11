@@ -31,3 +31,4 @@ export const startIngestion = (source_id: string) =>
   apiClient<IngestionJob>("/ingestion/jobs", { method: "POST", body: JSON.stringify({ source_id }) });
 export const listIngestionJobs = () => apiClient<IngestionJob[]>("/ingestion/jobs");
 export const getIngestionJob = (jobId: string) => apiClient<IngestionJob>(`/ingestion/jobs/${jobId}`);
+export const cancelJob = (jobId: string) => apiClient<{signaled: boolean}>(`/ingestion/jobs/${jobId}/cancel`, { method: "POST" });

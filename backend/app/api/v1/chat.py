@@ -61,6 +61,7 @@ async def create_chat_session(
     session_in: ChatSessionCreate,
     session_repo: ChatSessionRepository = Depends(get_chat_session_repository),
 ):
+    logger.info("Received request to create chat session")
     try:
         session_dict = session_in.model_dump()
         now = datetime.utcnow()
@@ -73,7 +74,7 @@ async def create_chat_session(
         session_dict.pop("_id", None)
         return ApiResponse(data=session_dict, message="Chat session created")
     except Exception as exc:
-        logger.exception("Failed to create chat session")
+        logger.error("Failed to create chat session")
         return ApiResponse(success=False, message=str(exc))
 
 
@@ -81,6 +82,7 @@ async def create_chat_session(
 async def list_chat_sessions(
     session_repo: ChatSessionRepository = Depends(get_chat_session_repository),
 ):
+    logger.info("Received request to list chat sessions")
     try:
         cursor = session_repo.collection.find({"is_deleted": False}).sort("updated_at", -1)
         sessions = []
@@ -90,7 +92,7 @@ async def list_chat_sessions(
             sessions.append(session)
         return ApiResponse(data=sessions, message="Chat sessions retrieved")
     except Exception as exc:
-        logger.exception("Failed to list chat sessions")
+        logger.error("Failed to list chat sessions")
         return ApiResponse(success=False, message=str(exc))
 
 
@@ -100,6 +102,7 @@ async def get_chat_session(
     session_repo: ChatSessionRepository = Depends(get_chat_session_repository),
     message_repo: ChatMessageRepository = Depends(get_chat_message_repository),
 ):
+    logger.info(f"Received request to get chat session: {session_id}")
     try:
         session = await session_repo.collection.find_one({"_id": ObjectId(session_id), "is_deleted": False})
         if not session:
@@ -116,7 +119,7 @@ async def get_chat_session(
         session["messages"] = messages
         return ApiResponse(data=session, message="Chat session with messages retrieved")
     except Exception as exc:
-        logger.exception("Failed to get chat session")
+        logger.error("Failed to get chat session")
         return ApiResponse(success=False, message=str(exc))
 
 
@@ -126,6 +129,7 @@ async def rename_chat_session(
     session_update: ChatSessionUpdate,
     session_repo: ChatSessionRepository = Depends(get_chat_session_repository),
 ):
+    logger.info(f"Received request to rename chat session: {session_id}")
     try:
         update_dict = session_update.model_dump(exclude_unset=True)
         update_dict["updated_at"] = datetime.utcnow()
@@ -137,7 +141,7 @@ async def rename_chat_session(
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chat session not found")
         return ApiResponse(message="Chat session renamed")
     except Exception as exc:
-        logger.exception("Failed to rename chat session")
+        logger.error("Failed to rename chat session")
         return ApiResponse(success=False, message=str(exc))
 
 
@@ -146,6 +150,7 @@ async def delete_chat_session(
     session_id: str,
     session_repo: ChatSessionRepository = Depends(get_chat_session_repository),
 ):
+    logger.info(f"Received request to delete chat session: {session_id}")
     try:
         result = await session_repo.collection.update_one(
             {"_id": ObjectId(session_id), "is_deleted": False},
@@ -155,7 +160,7 @@ async def delete_chat_session(
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chat session not found")
         return ApiResponse(message="Chat session deleted")
     except Exception as exc:
-        logger.exception("Failed to delete chat session")
+        logger.error("Failed to delete chat session")
         return ApiResponse(success=False, message=str(exc))
 
 
@@ -166,6 +171,7 @@ async def send_message(
     session_repo: ChatSessionRepository = Depends(get_chat_session_repository),
     message_repo: ChatMessageRepository = Depends(get_chat_message_repository),
 ):
+    logger.info(f"Received request to send message in chat session: {session_id}")
     try:
         # Verify session exists and is not deleted
         session = await session_repo.collection.find_one({"_id": ObjectId(session_id), "is_deleted": False})
@@ -174,6 +180,7 @@ async def send_message(
 
         # Save user message
         user_message_dict = message_in.model_dump()
+        user_message_dict["content"] = message_in.question
         user_message_dict["session_id"] = session_id
         user_message_dict["role"] = "user"
         user_message_dict["created_at"] = datetime.utcnow()
@@ -246,7 +253,7 @@ async def send_message(
             message="Message sent",
         )
     except Exception as exc:
-        logger.exception("Failed to send message")
+        logger.error("Failed to send message")
         return ApiResponse(success=False, message=str(exc))
 
 
@@ -283,5 +290,5 @@ async def get_message_traces(
         logger.warning(f"HTTP {exc.status_code}: {exc.detail}")
         return ApiResponse(success=False, message=f"{exc.status_code}: {exc.detail}")
     except Exception as exc:
-        logger.exception("Failed to get trace")
+        logger.error("Failed to get trace")
         return ApiResponse(success=False, message=str(exc))

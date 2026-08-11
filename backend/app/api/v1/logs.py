@@ -27,7 +27,7 @@ async def list_logs(
             message="Logs retrieved"
         )
     except Exception as exc:
-        logger.exception("Failed to list logs")
+        logger.error("Failed to list logs")
         return ApiResponse(success=False, message=str(exc))
 
 
@@ -91,7 +91,7 @@ async def logs_ui() -> str:
 </html>
 """
     except Exception as exc:
-        logger.exception("Failed to serve logs UI")
+        logger.error("Failed to serve logs UI")
         # In case of error, we still return an HTML response with an error message?
         # But the return type is HTMLResponse, so we must return a string.
         return f"""

@@ -24,7 +24,7 @@ def runtime_config() -> RuntimeConfig:
             rerank_top_k=settings.rerank_top_k,
         )
     except Exception as exc:
-        logger.exception("Failed to build runtime config")
+        logger.error("Failed to build runtime config")
         # Return a default config or raise? We'll raise to be caught by the outer try-except in the route handlers.
         raise
 
@@ -34,7 +34,7 @@ async def get_config() -> ApiResponse:
     try:
         return ApiResponse(data=runtime_config().model_dump(), message="Configuration retrieved")
     except Exception as exc:
-        logger.exception("Failed to get configuration")
+        logger.error("Failed to get configuration")
         return ApiResponse(success=False, message=str(exc))
 
 
@@ -46,5 +46,5 @@ async def patch_config(_: ConfigPatch) -> ApiResponse:
             message="Runtime config endpoint is wired; persistable live updates require config repository promotion.",
         )
     except Exception as exc:
-        logger.exception("Failed to patch configuration")
+        logger.error("Failed to patch configuration")
         return ApiResponse(success=False, message=str(exc))

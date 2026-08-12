@@ -285,8 +285,8 @@ export function DashboardPageFeature() {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 10, right: 20, left: 10, bottom: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.1)" />
-                  <XAxis dataKey="name" height={xAxisHeight} tick={{fill: '#ffffff', fontSize: 16, fontWeight: 900}} axisLine={{stroke: 'rgba(255,255,255,0.2)'}} angle={-35} textAnchor="end" interval={0} tickMargin={12} />
-                  <YAxis tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={{stroke: 'rgba(255,255,255,0.1)'}} />
+                  <XAxis dataKey="name" height={xAxisHeight} tick={{fill: '#ffffff', fontSize: 18, fontWeight: 900}} axisLine={{stroke: 'rgba(255,255,255,0.2)'}} angle={-35} textAnchor="end" interval={0} tickMargin={12} />
+                  <YAxis tick={{fill: '#a1a1aa', fontSize: 14}} axisLine={{stroke: 'rgba(255,255,255,0.1)'}} />
                   <Tooltip 
                     cursor={{fill: 'rgba(var(--text), 0.05)'}}
                     contentStyle={{ backgroundColor: 'rgb(var(--panel))', border: '1px solid rgb(var(--border))', borderRadius: '12px', backdropFilter: 'blur(10px)' }}
@@ -320,9 +320,9 @@ export function DashboardPageFeature() {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 10, right: 20, left: 10, bottom: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.1)" />
-                  <XAxis dataKey="name" height={xAxisHeight} tick={{fill: '#ffffff', fontSize: 16, fontWeight: 900}} axisLine={{stroke: 'rgba(255,255,255,0.2)'}} angle={-35} textAnchor="end" interval={0} tickMargin={12} />
-                  <YAxis yAxisId="left" tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={{stroke: 'rgba(255,255,255,0.1)'}} />
-                  <YAxis yAxisId="right" orientation="right" tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={{stroke: 'rgba(255,255,255,0.1)'}} />
+                  <XAxis dataKey="name" height={xAxisHeight} tick={{fill: '#ffffff', fontSize: 18, fontWeight: 900}} axisLine={{stroke: 'rgba(255,255,255,0.2)'}} angle={-35} textAnchor="end" interval={0} tickMargin={12} />
+                  <YAxis yAxisId="left" tick={{fill: '#a1a1aa', fontSize: 14}} axisLine={{stroke: 'rgba(255,255,255,0.1)'}} />
+                  <YAxis yAxisId="right" orientation="right" tick={{fill: '#a1a1aa', fontSize: 14}} axisLine={{stroke: 'rgba(255,255,255,0.1)'}} />
                   <Tooltip 
                     cursor={{fill: 'rgba(var(--text), 0.05)'}}
                     contentStyle={{ backgroundColor: 'rgb(var(--panel))', border: '1px solid rgb(var(--border))', borderRadius: '12px', backdropFilter: 'blur(10px)' }}
@@ -413,7 +413,7 @@ export function DashboardPageFeature() {
         <h3 className="font-semibold text-xl mb-6 text-glow">Detailed LLM Performance Report</h3>
         <div className="overflow-x-auto glass-panel rounded-xl">
           <table className="w-full text-left text-sm text-gray-300">
-            <thead className="text-xs text-gray-400 uppercase bg-black/20 border-b border-white/5">
+            <thead className="text-xl font-bold text-gray-300 uppercase bg-black/20 border-b border-white/5">
               <tr>
                 <th scope="col" className="px-6 py-4">Provider</th>
                 <th scope="col" className="px-6 py-4">Model</th>
@@ -428,32 +428,32 @@ export function DashboardPageFeature() {
             <tbody>
               {metricsData?.metrics.map((m, idx) => (
                 <tr key={idx} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                  <td className="px-6 py-4 font-medium text-white">{m.provider}</td>
-                  <td className="px-6 py-4"><span className="px-2 py-1 bg-white/10 rounded text-xs">{m.model}</span></td>
-                  <td className="px-6 py-4">{m.endpoint_type}</td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 text-lg font-bold text-white">{m.provider}</td>
+                  <td className="px-6 py-4 text-lg"><span className="px-2 py-1 bg-white/10 rounded text-sm">{m.model}</span></td>
+                  <td className="px-6 py-4 text-lg">{m.endpoint_type}</td>
+                  <td className="px-6 py-4 text-lg">
                     {m.total_requests} 
-                    <span className="text-gray-500 ml-2">
+                    <span className="text-gray-500 ml-2 text-sm">
                       (<span className="text-green-400">{m.successful_requests}</span>/<span className="text-red-400">{m.failed_requests}</span>)
                     </span>
                   </td>
-                  <td className="px-6 py-4">
-                    <span className="text-green-400">
+                  <td className="px-6 py-4 text-lg">
+                    <span className="text-green-400 font-semibold">
                       {(m.success_rate * 100).toFixed(1)}%
                     </span>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 text-lg">
                     <span className={m.error_rate > 0 ? "text-red-400 font-semibold" : "text-green-400"}>
                       {(m.error_rate * 100).toFixed(1)}%
                     </span>
                   </td>
-                  <td className="px-6 py-4 font-mono">{m.total_tokens.toLocaleString()}</td>
-                  <td className="px-6 py-4 font-mono">{m.avg_latency_ms.toLocaleString()}</td>
+                  <td className="px-6 py-4 text-lg font-mono">{m.total_tokens.toLocaleString()}</td>
+                  <td className="px-6 py-4 text-lg font-mono">{m.avg_latency_ms.toLocaleString()}</td>
                 </tr>
               ))}
               {(!metricsData?.metrics || metricsData.metrics.length === 0) && (
                 <tr>
-                  <td colSpan={8} className="px-6 py-8 text-center text-gray-500">No performance data available for this time period.</td>
+                  <td colSpan={8} className="px-6 py-8 text-center text-gray-400 text-lg">No performance data available for this time period.</td>
                 </tr>
               )}
             </tbody>

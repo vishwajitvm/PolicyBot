@@ -17,3 +17,5 @@ langchain-text-splitters
 tiktoken
 langchain-huggingface
 langchain-community
+unstructured
+pdfminer.six

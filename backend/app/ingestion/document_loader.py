@@ -27,15 +27,19 @@ class DocumentLoader:
                 if text:
                     yield text
         elif suffix == ".docx":
-            from docx import Document
-            doc = await asyncio.to_thread(Document, str(path))
+            # Use unstructured to parse .docx files for better reliability
+            from unstructured.partition.docx import partition_docx
+            # partition_docx returns a list of elements; we join their text content.
+            elements = await asyncio.to_thread(partition_docx, filename=str(path))
+            # Extract text from each element, ignoring empty strings
+            texts = [element.text for element in elements if getattr(element, "text", None)]
+            # Yield the full concatenated text in chunks of up to 20 paragraphs
             batch = []
-            for paragraph in doc.paragraphs:
-                if paragraph.text:
-                    batch.append(paragraph.text)
-                    if len(batch) >= 20:
-                        yield "\n".join(batch)
-                        batch = []
+            for txt in texts:
+                batch.append(txt)
+                if len(batch) >= 20:
+                    yield "\n".join(batch)
+                    batch = []
             if batch:
                 yield "\n".join(batch)
         else:

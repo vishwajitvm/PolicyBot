@@ -1,4 +1,4 @@
-import { ApiResponse } from "./types";
+import type { ApiResponse } from "../types/api.types";
 
 export interface WorkflowConfig {
   llm_fallback_providers: string[];

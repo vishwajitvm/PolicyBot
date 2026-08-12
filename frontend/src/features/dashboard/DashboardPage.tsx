@@ -232,7 +232,7 @@ export function DashboardPageFeature() {
       {/* Main Analytics Section */}
       <div className="glass-card p-6">
         <h3 className="font-semibold text-xl mb-6 text-glow">LLM Analytics & Fallback Performance</h3>
-        <div className="grid gap-8 lg:grid-cols-2">
+        <div className="grid gap-8 lg:grid-cols-1">
           
           <div className="h-80 relative group">
             <div className="absolute inset-0 bg-primary/5 blur-2xl rounded-full group-hover:bg-primary/10 transition-colors pointer-events-none"></div>
@@ -302,29 +302,62 @@ export function DashboardPageFeature() {
         </div>
       </div>
 
-      {/* Accuracy Trend */}
-      <div className="glass-card p-6 relative group">
-        <div className="absolute inset-0 bg-secondary/5 blur-2xl rounded-xl group-hover:bg-secondary/10 transition-colors pointer-events-none"></div>
-        <div className="flex justify-between items-start mb-4 relative z-10">
-          <div>
-            <h3 className="font-semibold text-xl text-glow">RAG Accuracy & Confidence Trend</h3>
-            <p className="text-xs text-gray-400 mt-1">Formula: Evaluated answer confidence score extracted directly from live query traces.</p>
+      {/* Accuracy & Latency Trend Row */}
+      <div className="grid gap-8 lg:grid-cols-2">
+        <div className="glass-card p-6 relative group">
+          <div className="absolute inset-0 bg-secondary/5 blur-2xl rounded-xl group-hover:bg-secondary/10 transition-colors pointer-events-none"></div>
+          <div className="flex justify-between items-start mb-4 relative z-10">
+            <div>
+              <h3 className="font-semibold text-xl text-glow">RAG Accuracy & Confidence Trend</h3>
+              <p className="text-xs text-gray-400 mt-1">Formula: Evaluated answer confidence score extracted directly from live query traces.</p>
+            </div>
+          </div>
+          <div className="h-72 relative w-full glass-panel p-4 z-10">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={accuracyTrendData} margin={{ top: 10, right: 10, left: -20, bottom: 40 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.1)" />
+                <XAxis dataKey="time" tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={{stroke: 'rgba(255,255,255,0.1)'}} />
+                <YAxis domain={[0, 100]} tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={{stroke: 'rgba(255,255,255,0.1)'}} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: 'rgb(var(--panel))', border: '1px solid rgb(var(--border))', borderRadius: '12px', backdropFilter: 'blur(10px)' }}
+                  itemStyle={{ color: '#b464ff' }}
+                />
+                <Legend verticalAlign="bottom" wrapperStyle={{ paddingTop: '20px' }}/>
+                <Line type="monotone" dataKey="confidence" stroke="#b464ff" strokeWidth={3} dot={{ fill: '#b464ff', strokeWidth: 2 }} activeDot={{ r: 8 }} name="Confidence (%)" />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
         </div>
-        <div className="h-64 relative w-full glass-panel p-4 z-10">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={accuracyTrendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.1)" />
-              <XAxis dataKey="time" tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={{stroke: 'rgba(255,255,255,0.1)'}} />
-              <YAxis domain={[0, 100]} tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={{stroke: 'rgba(255,255,255,0.1)'}} />
-              <Tooltip 
-                contentStyle={{ backgroundColor: 'rgb(var(--panel))', border: '1px solid rgb(var(--border))', borderRadius: '12px', backdropFilter: 'blur(10px)' }}
-                itemStyle={{ color: '#b464ff' }}
-              />
-              <Legend wrapperStyle={{paddingTop: '20px'}}/>
-              <Line type="monotone" dataKey="confidence" stroke="#b464ff" strokeWidth={3} dot={{ fill: '#b464ff', strokeWidth: 2 }} activeDot={{ r: 8 }} name="Confidence (%)" />
-            </LineChart>
-          </ResponsiveContainer>
+
+        <div className="glass-card p-6 relative group">
+          <div className="absolute inset-0 bg-primary/5 blur-2xl rounded-xl group-hover:bg-primary/10 transition-colors pointer-events-none"></div>
+          <div className="flex justify-between items-start mb-4 relative z-10">
+            <div>
+              <h3 className="font-semibold text-xl text-glow">Daily Requests Volume</h3>
+              <p className="text-xs text-gray-400 mt-1">Formula: Total queries processed by the models per day.</p>
+            </div>
+          </div>
+          <div className="h-72 relative w-full glass-panel p-4 z-10">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={timeseriesData} margin={{ top: 10, right: 10, left: -20, bottom: 40 }}>
+                <defs>
+                  <linearGradient id="colorRequestsArea" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.1)" />
+                <XAxis dataKey="date" tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={{stroke: 'rgba(255,255,255,0.1)'}} />
+                <YAxis tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={{stroke: 'rgba(255,255,255,0.1)'}} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: 'rgb(var(--panel))', border: '1px solid rgb(var(--border))', borderRadius: '12px', backdropFilter: 'blur(10px)' }}
+                  itemStyle={{ color: '#3b82f6' }}
+                />
+                <Legend verticalAlign="bottom" wrapperStyle={{ paddingTop: '20px' }}/>
+                <Area type="monotone" dataKey="total_requests" stroke="#3b82f6" fillOpacity={1} fill="url(#colorRequestsArea)" name="Total Requests" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
 

@@ -12,8 +12,15 @@ export type LlmMetric = {
   avg_latency_ms: number;
 };
 
+export type TokenTimeseriesData = {
+  date: string;
+  total_requests: number;
+  total_tokens: number;
+};
+
 export type MetricsResponse = {
   metrics: LlmMetric[];
+  timeseries?: TokenTimeseriesData[];
 };
 
 export const getMetrics = () => apiClient<MetricsResponse>("/metrics");

@@ -3,6 +3,7 @@ import type { IngestionJob } from "../../api/ingestion.api";
 import { cancelJob } from "../../api/ingestion.api";
 import { Badge } from "../../components/ui/Badge";
 import { AlertTriangle, Clock, Database, RefreshCw, Settings, Upload, FileText, Folder, CheckCircle, Activity, Box, Zap } from "lucide-react";
+import Swal from 'sweetalert2';
 
 export function IngestionDashboard({ job }: { job: IngestionJob }) {
   const [logs, setLogs] = useState<string[]>(job.logs ?? []);
@@ -104,12 +105,30 @@ export function IngestionDashboard({ job }: { job: IngestionJob }) {
               <div className="flex items-center gap-4">
                 <button 
                   onClick={async () => {
-                    if (confirm("Are you sure you want to cancel this ingestion?")) {
+                    const result = await Swal.fire({
+                      title: 'Cancel Ingestion?',
+                      text: "Are you sure you want to cancel this job? Partial progress may be lost.",
+                      icon: 'warning',
+                      showCancelButton: true,
+                      confirmButtonColor: '#d33',
+                      cancelButtonColor: '#3085d6',
+                      confirmButtonText: 'Yes, cancel it!'
+                    });
+                    
+                    if (result.isConfirmed) {
                       setIsCancelling(true);
                       try {
                         await cancelJob(job.job_id);
+                        Swal.fire({
+                          title: 'Cancelled',
+                          text: 'Cancellation request sent.',
+                          icon: 'success',
+                          timer: 2000,
+                          showConfirmButton: false
+                        });
                       } catch (e) {
                         console.error(e);
+                        Swal.fire('Error', 'Failed to cancel the job.', 'error');
                       }
                       setIsCancelling(false);
                     }

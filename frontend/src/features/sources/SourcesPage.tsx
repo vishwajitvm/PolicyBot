@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Trash2, UploadCloud } from "lucide-react";
+import Swal from "sweetalert2";
 import { deleteSource, listSources } from "../../api/sources.api";
 import { startIngestion } from "../../api/ingestion.api";
 import { Button } from "../../components/ui/Button";
@@ -64,7 +65,26 @@ export function SourcesPageFeature() {
                       </>
                     )}
                   </Button>
-                  <Button className="bg-red-500" onClick={() => remove.mutate(source.source_id)}><Trash2 size={16} /></Button>
+                  <Button className="bg-red-500" onClick={() => {
+                    Swal.fire({
+                      title: 'Are you sure?',
+                      text: "You won't be able to revert this!",
+                      icon: 'warning',
+                      showCancelButton: true,
+                      confirmButtonColor: '#3085d6',
+                      cancelButtonColor: '#d33',
+                      confirmButtonText: 'Yes, delete it!'
+                    }).then((result) => {
+                      if (result.isConfirmed) {
+                        remove.mutate(source.source_id);
+                        Swal.fire(
+                          'Deleted!',
+                          'Your source has been deleted.',
+                          'success'
+                        )
+                      }
+                    })
+                  }}><Trash2 size={16} /></Button>
                 </div>
               </div>
             ))}

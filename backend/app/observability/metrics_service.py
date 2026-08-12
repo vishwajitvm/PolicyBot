@@ -53,7 +53,30 @@ class MetricsService:
                 "total_tokens": r["total_input_tokens"] + r["total_output_tokens"],
                 "avg_latency_ms": int(r["avg_latency_ms"])
             })
+
+        timeseries_pipeline = [
+            {
+                "$group": {
+                    "_id": {
+                        "date": {"$dateToString": {"format": "%Y-%m-%d", "date": "$timestamp"}},
+                    },
+                    "total_requests": {"$sum": 1},
+                    "total_tokens": {"$sum": "$total_tokens"}
+                }
+            },
+            {"$sort": {"_id.date": 1}}
+        ]
+        
+        ts_results = await mongodb.db()["llm_metrics"].aggregate(timeseries_pipeline).to_list(length=100)
+        timeseries = []
+        for r in ts_results:
+            if r["_id"].get("date"):
+                timeseries.append({
+                    "date": r["_id"]["date"],
+                    "total_requests": r["total_requests"],
+                    "total_tokens": r["total_tokens"]
+                })
             
-        return {"metrics": summary}
+        return {"metrics": summary, "timeseries": timeseries}
 
 metrics_service = MetricsService()

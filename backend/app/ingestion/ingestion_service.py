@@ -25,6 +25,7 @@ from app.models.ingestion_job import IngestionJob
 from app.providers.base_embedding import BaseEmbeddingProvider
 from app.vectorstores.base_vector_store import BaseVectorStore, VectorChunk
 from app.websocket_manager import manager
+from app.ingestion.langgraph_workflow import create_ingestion_graph
 
 
 class IngestionService:
@@ -46,9 +47,8 @@ class IngestionService:
         self.loader = DocumentLoader()
         self.hasher = HashService()
         self.metadata = MetadataExtractor()
-        self.chunker = ChunkingService(settings.chunk_size if hasattr(settings, 'chunk_size') and settings.chunk_size else 4000, 
-                                       settings.chunk_overlap if hasattr(settings, 'chunk_overlap') and settings.chunk_overlap else 500)
         self.job_service = IngestionJobService()
+        self.workflow = create_ingestion_graph(self.embedding_provider, self.vector_store)
         logger.info(
             f"IngestionService initialized with embedding provider: {type(embedding_provider).__name__} "
             f"and vector store: {type(vector_store).__name__}"
@@ -219,64 +219,37 @@ class IngestionService:
                     await self.documents.upsert_one({"document_id": document_id}, document)
                     await self.versions.insert_one({**document, "document_version_id": str(uuid4())})
 
-                    # Async lazy loading and smart chunking
-                    document_chunk_count = 0
-                    batch = []
-                    batch_size = 50  # Process chunks in batches of 50 for optimal performance
+                    # Run LangGraph Workflow for the document
+                    initial_state = {
+                        "job_id": job["job_id"],
+                        "file_path": str(item.path),
+                        "file_name": current_file_name,
+                        "source_id": source_id,
+                        "document_id": document_id,
+                        "chunks": [],
+                        "embedded_vectors": [],
+                        "error": None,
+                        "logs": [],
+                        "total_documents": total_documents,
+                        "processed_documents": processed_documents,
+                        "embedded_chunks_count": 0,
+                        "total_chunks_count": 0
+                    }
                     
-                    tasks = []
-                    # ORCHESTRATOR: process batches sequentially to respect provider rate limits (15 RPM free tier)
-                    semaphore = asyncio.Semaphore(1)
+                    final_state = await self.workflow.ainvoke(initial_state)
                     
-                    async def bounded_embed(b, did, sid, meta, jid, lgs):
-                        async with semaphore:
-                            return await self._embed_and_index_batch(b, did, sid, meta, jid, lgs)
-                    
-                    async for text_part in self.loader.load_chunks(item.path):
-                        if not text_part.strip():
-                            continue
-                            
-                        # Chunking dynamically per text part
-                        chunks = self.chunker.split(text_part, file_path=str(item.path))
+                    if final_state.get("error"):
+                        raise Exception(final_state["error"])
                         
-                        for chunk in chunks:
-                            # Re-index across the whole document
-                            chunk.index = document_chunk_count
-                            batch.append(chunk)
-                            document_chunk_count += 1
-                            
-                            if get_cancellation_event(job["job_id"]).is_set():
-                                raise asyncio.CancelledError("Job cancelled by user")
-                                
-                            if len(batch) >= batch_size:
-                                await self._update_job_progress(
-                                    job["job_id"],
-                                    phase="embedding",
-                                    logs=[*logs, self._timestamped_log(f"Queuing batch of {len(batch)} chunks for {current_file_name}")]
-                                )
-                                tasks.append(asyncio.create_task(bounded_embed(batch, document_id, source_id, metadata, job["job_id"], logs)))
-                                batch = []
-                                
-                    # Process remaining batch
-                    if batch:
-                        await self._update_job_progress(
-                            job["job_id"],
-                            phase="embedding",
-                            logs=[*logs, self._timestamped_log(f"Queuing final batch of {len(batch)} chunks for {current_file_name}")]
-                        )
-                        tasks.append(asyncio.create_task(bounded_embed(batch, document_id, source_id, metadata, job["job_id"], logs)))
+                    processed_total = final_state.get("embedded_chunks_count", 0)
+                    embedded_chunks += processed_total
+                    indexed_chunks += processed_total
+                    total_chunks += final_state.get("total_chunks_count", 0)
+                    
+                    if final_state.get("logs"):
+                        logs.extend(final_state["logs"])
 
-                    if tasks:
-                        results = await asyncio.gather(*tasks, return_exceptions=True)
-                        for r in results:
-                            if isinstance(r, Exception):
-                                raise r
-                        processed_total = sum(results)
-                        embedded_chunks += processed_total
-                        indexed_chunks += processed_total
-                        total_chunks += processed_total
-
-                    logs = [*logs, self._timestamped_log(f"Successfully processed {current_file_name} ({document_chunk_count} chunks)")]
+                    logs = [*logs, self._timestamped_log(f"Successfully processed {current_file_name} with LangGraph")]
                     processed_documents += 1
 
                     overall_progress = 5.0 + (((processed_documents + skipped_documents) / total_documents) * 95.0)

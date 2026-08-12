@@ -33,18 +33,32 @@ async def get_dashboard_stats() -> ApiResponse:
         # Running jobs: count of ingestion jobs with status "running"
         running_jobs = await job_repo.collection.count_documents({"status": "running"})
 
-        # Average confidence: average of answer_confidence from traces
+        # Average confidence and accuracy trend
         traces = await trace_repo.find_many()
+        average_confidence = 0.0
+        accuracy_trend = []
         if traces:
-            # Assuming each trace has a 'scores' field with answer_confidence
             confidences = []
             for t in traces:
                 scores = t.get("scores", {})
                 if isinstance(scores, dict) and "answer_confidence" in scores:
-                    confidences.append(scores["answer_confidence"])
-            average_confidence = sum(confidences) / len(confidences) if confidences else 0.0
-        else:
-            average_confidence = 0.0
+                    conf = scores["answer_confidence"]
+                    confidences.append(conf)
+                    
+                    # Extract timestamp for trend
+                    ts = t.get("timestamp") or t.get("created_at") or t.get("ts")
+                    if ts:
+                        accuracy_trend.append({
+                            "timestamp": ts if isinstance(ts, str) else ts.isoformat(),
+                            "confidence": round(conf * 100, 2),
+                            "latency": t.get("latency_ms", 0)
+                        })
+            
+            if confidences:
+                average_confidence = sum(confidences) / len(confidences)
+                
+            # Sort trend by timestamp
+            accuracy_trend.sort(key=lambda x: x["timestamp"])
 
         # Latest query latency: latency_ms of the most recent trace
         latest_query_latency = 0
@@ -76,6 +90,7 @@ async def get_dashboard_stats() -> ApiResponse:
             "sources_connected": sources_connected,
             "running_jobs": running_jobs,
             "average_confidence": round(average_confidence * 100, 2),  # Convert to percentage
+            "accuracy_trend": accuracy_trend,
             "latest_query_latency": latest_query_latency,
             "active_llm_provider": llm_provider,  # Keeping for backward compatibility
             "active_vector_db": vector_db_provider,  # Keeping for backward compatibility

@@ -10,6 +10,8 @@ import { SourcesPage } from "../pages/SourcesPage";
 import { TracePage } from "../pages/TracePage";
 import { ModelManagerPage } from "../pages/ModelManagerPage";
 
+import { WorkflowConfigPage } from "../pages/WorkflowConfigPage";
+
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -24,7 +26,8 @@ export const router = createBrowserRouter([
       { path: "evaluation", element: <EvaluationPage /> },
       { path: "settings", element: <SettingsPage /> },
       { path: "logs", element: <LogsPage /> },
-      { path: "models", element: <ModelManagerPage /> }
+      { path: "models", element: <ModelManagerPage /> },
+      { path: "workflow", element: <WorkflowConfigPage /> }
     ]
   }
 ]);

@@ -8,10 +8,13 @@ from app.providers.base_llm import BaseLLMProvider, LLMResponse
 
 
 class GeminiProvider(BaseLLMProvider, BaseEmbeddingProvider):
-    provider = "gemini"
+    provider_name = "gemini"
 
     def __init__(self, settings: Settings):
         self.settings = settings
+        self.chat_model = settings.gemini_chat_model
+        self.embedding_model = settings.gemini_embedding_model
+        
         if not settings.gemini_api_key:
             raise NotConfiguredError("GEMINI_API_KEY is required for Gemini provider")
         try:

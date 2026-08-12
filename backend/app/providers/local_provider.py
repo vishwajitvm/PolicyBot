@@ -10,8 +10,12 @@ from tracenest import logger
 
 
 class LocalProvider(BaseLLMProvider, BaseEmbeddingProvider):
+    provider_name = "ollama"
+
     def __init__(self, settings: Settings):
         self.settings = settings
+        self.chat_model = settings.ollama_chat_model
+        self.embedding_model = getattr(settings, "ollama_embedding_model", "nomic-embed-text")
         self._client = None
         self._timeout = httpx.Timeout(10.0, read=30.0)  # 10s connect, 30s read
 

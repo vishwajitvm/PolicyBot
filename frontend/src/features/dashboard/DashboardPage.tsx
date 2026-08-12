@@ -21,6 +21,7 @@ import {
 
 export function DashboardPageFeature() {
   const [daysFilter, setDaysFilter] = useState<number | undefined>(undefined);
+  const [modelFilter, setModelFilter] = useState<string | undefined>(undefined);
   const [isModelsModalOpen, setIsModelsModalOpen] = useState(false);
 
   const { data: healthData, error: healthError } = useQuery({
@@ -29,15 +30,22 @@ export function DashboardPageFeature() {
     retry: false
   });
   
-  const { data: statsData } = useQuery({
-    queryKey: ["dashboard-stats", daysFilter],
+  // Base stats without model filter to get the full list of available models for the dropdown
+  const { data: baseStatsData } = useQuery({
+    queryKey: ["dashboard-stats-base", daysFilter],
     queryFn: () => getDashboardStats(daysFilter),
     retry: false
   });
 
+  const { data: statsData } = useQuery({
+    queryKey: ["dashboard-stats", daysFilter, modelFilter],
+    queryFn: () => getDashboardStats(daysFilter, modelFilter),
+    retry: false
+  });
+
   const { data: metricsData } = useQuery({
-    queryKey: ["metrics", daysFilter],
-    queryFn: () => getMetrics(daysFilter),
+    queryKey: ["metrics", daysFilter, modelFilter],
+    queryFn: () => getMetrics(daysFilter, modelFilter),
     retry: false
   });
 
@@ -68,35 +76,50 @@ export function DashboardPageFeature() {
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-3xl font-bold text-white tracking-tight">Analytics Command Center</h1>
-            {statsData?.timezone && (
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/20 text-primary border border-primary/30 shadow-[0_0_10px_rgba(0,220,200,0.2)]">
-                {statsData.timezone}
-              </span>
-            )}
           </div>
           <p className="text-gray-400 text-sm mt-1">Deep insights into RAG performance and model health</p>
         </div>
         
-        <div className="flex items-center gap-3 glass-panel p-2 rounded-xl">
-          <label className="text-sm text-gray-400 font-medium px-2">Time Range:</label>
-          <select 
-            className="bg-black/40 border border-white/10 text-white text-sm rounded-lg focus:ring-primary focus:border-primary block p-2 backdrop-blur-md outline-none transition-all cursor-pointer"
-            value={daysFilter === undefined ? "all" : daysFilter}
-            onChange={(e) => setDaysFilter(e.target.value === "all" ? undefined : Number(e.target.value))}
-          >
-            <option value="all">All Time</option>
-            <option value="0">Today</option>
-            <option value="1">Yesterday</option>
-            <option value="3">Last 3 Days</option>
-            <option value="7">Last Week</option>
-            <option value="30">Last Month</option>
-            <option value="90">Last 3 Months (Max)</option>
-          </select>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-3 glass-panel p-2 rounded-xl">
+            <label className="text-sm text-gray-400 font-medium px-2">Model:</label>
+            <select 
+              className="bg-black/40 border border-white/10 text-white text-sm rounded-lg focus:ring-primary focus:border-primary block p-2 backdrop-blur-md outline-none transition-all cursor-pointer"
+              value={modelFilter === undefined ? "all" : modelFilter}
+              onChange={(e) => setModelFilter(e.target.value === "all" ? undefined : e.target.value)}
+            >
+              <option value="all">All Models</option>
+              {baseStatsData?.unique_models_list?.map((modelStr) => (
+                <option key={modelStr} value={modelStr.split(" / ")[1]}>{modelStr.split(" / ")[1]}</option>
+              ))}
+            </select>
+          </div>
+          
+          <div className="flex items-center gap-3 glass-panel p-2 rounded-xl">
+            <label className="text-sm text-gray-400 font-medium px-2">Time Range:</label>
+            <select 
+              className="bg-black/40 border border-white/10 text-white text-sm rounded-lg focus:ring-primary focus:border-primary block p-2 backdrop-blur-md outline-none transition-all cursor-pointer"
+              value={daysFilter === undefined ? "all" : daysFilter}
+              onChange={(e) => setDaysFilter(e.target.value === "all" ? undefined : Number(e.target.value))}
+            >
+              <option value="all">All Time</option>
+              <option value="0">Today</option>
+              <option value="1">Yesterday</option>
+              <option value="3">Last 3 Days</option>
+              <option value="7">Last Week</option>
+              <option value="30">Last Month</option>
+              <option value="90">Last 3 Months (Max)</option>
+            </select>
+          </div>
         </div>
       </div>
 
       {/* Top Cards Row (Existing basic stats) */}
-      <DashboardCards stats={statsData} />
+      <DashboardCards stats={statsData} health={healthData ? {
+        status: healthData.status,
+        mongodb: healthData.mongodb,
+        vector_store: healthData.vector_store
+      } : undefined} />
 
       {/* Advanced Stats Row */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -217,11 +240,11 @@ export function DashboardPageFeature() {
               <h4 className="text-sm font-medium text-primary tracking-wider uppercase">Tokens Consumed by Model</h4>
               <p className="text-xs text-gray-500 mt-1">Total aggregated tokens across the selected time period per model.</p>
             </div>
-            <div className="relative h-full w-full glass-panel p-4 pb-12">
+            <div className="relative h-full w-full glass-panel p-4 pb-20">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 40 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.1)" />
-                  <XAxis dataKey="name" tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={{stroke: 'rgba(255,255,255,0.1)'}} />
+                  <XAxis dataKey="name" tick={{fill: '#a1a1aa', fontSize: 10}} axisLine={{stroke: 'rgba(255,255,255,0.1)'}} angle={-35} textAnchor="end" interval={0} />
                   <YAxis tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={{stroke: 'rgba(255,255,255,0.1)'}} />
                   <Tooltip 
                     cursor={{fill: 'rgba(var(--text), 0.05)'}}
@@ -247,11 +270,11 @@ export function DashboardPageFeature() {
               <h4 className="text-sm font-medium text-secondary tracking-wider uppercase">Latency & Error Rates</h4>
               <p className="text-xs text-gray-500 mt-1">Average generation latency (ms) vs total error occurrences per model.</p>
             </div>
-            <div className="relative h-full w-full glass-panel p-4 pb-12">
+            <div className="relative h-full w-full glass-panel p-4 pb-20">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 40 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.1)" />
-                  <XAxis dataKey="name" tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={{stroke: 'rgba(255,255,255,0.1)'}} />
+                  <XAxis dataKey="name" tick={{fill: '#a1a1aa', fontSize: 10}} axisLine={{stroke: 'rgba(255,255,255,0.1)'}} angle={-35} textAnchor="end" interval={0} />
                   <YAxis yAxisId="left" tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={{stroke: 'rgba(255,255,255,0.1)'}} />
                   <YAxis yAxisId="right" orientation="right" tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={{stroke: 'rgba(255,255,255,0.1)'}} />
                   <Tooltip 
@@ -355,45 +378,6 @@ export function DashboardPageFeature() {
               )}
             </tbody>
           </table>
-        </div>
-      </div>
-      
-      {/* Infrastructure Section */}
-      <div className="glass-card p-6">
-        <h3 className="font-semibold text-xl mb-6 text-glow">System Infrastructure Health</h3>
-        <div className="grid gap-6 md:grid-cols-3">
-          <div className="p-5 glass-panel relative overflow-hidden group hover:border-primary/50 transition-colors">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full blur-xl group-hover:bg-primary/20 transition-all pointer-events-none"></div>
-            <p className="text-sm text-gray-400 mb-2 uppercase tracking-wide">Backend API</p>
-            <div className="flex items-center gap-3">
-              <div className={`w-3 h-3 rounded-full shadow-[0_0_10px] ${healthData?.status === "ok" ? "bg-green-400 shadow-green-400/50" : "bg-red-400 shadow-red-400/50"}`}></div>
-              <p className="text-2xl font-light text-white">
-                {healthData?.status ?? (healthError ? "Offline" : "Checking...")}
-              </p>
-            </div>
-          </div>
-          
-          <div className="p-5 glass-panel relative overflow-hidden group hover:border-secondary/50 transition-colors">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-secondary/10 rounded-full blur-xl group-hover:bg-secondary/20 transition-all pointer-events-none"></div>
-            <p className="text-sm text-gray-400 mb-2 uppercase tracking-wide">MongoDB Store</p>
-            <div className="flex items-center gap-3">
-              <div className={`w-3 h-3 rounded-full shadow-[0_0_10px] ${healthData?.mongodb.status === "ok" ? "bg-green-400 shadow-green-400/50" : "bg-yellow-400 shadow-yellow-400/50"}`}></div>
-              <p className="text-2xl font-light text-white">
-                {healthData?.mongodb.status ?? "Unknown"}
-              </p>
-            </div>
-          </div>
-          
-          <div className="p-5 glass-panel relative overflow-hidden group hover:border-white/50 transition-colors">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full blur-xl group-hover:bg-white/10 transition-all pointer-events-none"></div>
-            <p className="text-sm text-gray-400 mb-2 uppercase tracking-wide">Vector DB (Qdrant)</p>
-            <div className="flex items-center gap-3">
-              <div className={`w-3 h-3 rounded-full shadow-[0_0_10px] ${healthData?.vector_store.status === "ok" ? "bg-green-400 shadow-green-400/50" : "bg-yellow-400 shadow-yellow-400/50"}`}></div>
-              <p className="text-2xl font-light text-white">
-                {healthData?.vector_store.status ?? "Unknown"}
-              </p>
-            </div>
-          </div>
         </div>
       </div>
 

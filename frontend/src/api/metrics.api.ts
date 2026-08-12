@@ -26,7 +26,15 @@ export type MetricsResponse = {
   timeseries?: TokenTimeseriesData[];
 };
 
-export const getMetrics = (days_filter?: number) => {
-  const query = days_filter !== undefined ? `?days_filter=${days_filter}` : "";
+export const getMetrics = (days_filter?: number, model_filter?: string) => {
+  const params = new URLSearchParams();
+  if (days_filter !== undefined) {
+    params.append('days_filter', days_filter.toString());
+  }
+  if (model_filter) {
+    params.append('model_filter', model_filter);
+  }
+  
+  const query = params.toString() ? `?${params.toString()}` : "";
   return apiClient<MetricsResponse>(`/metrics${query}`);
 };

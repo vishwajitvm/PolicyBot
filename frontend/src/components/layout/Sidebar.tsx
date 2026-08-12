@@ -8,6 +8,7 @@ import {
   MessageSquare,
   Settings,
   UploadCloud,
+  Cpu,
 } from "lucide-react";
 import { cn } from "../../utils/cn";
 
@@ -18,6 +19,7 @@ const links = [
   { to: "/chat", label: "Chat", icon: MessageSquare },
   { to: "/traces/latest", label: "Traces", icon: FileClock },
   { to: "/evaluation", label: "Evaluation", icon: BarChart3 },
+  { to: "/workflow", label: "Workflow Config", icon: Cpu },
   { to: "/settings", label: "Settings", icon: Settings },
   { to: "/logs", label: "Logs", icon: Bot },
   { to: "/models", label: "Models & Config", icon: Database },

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { getModels } from "../../api/models.api";
+import { getWorkflowConfig } from "../../api/workflow.api";
 import { updateApiKey } from "../../api/config.api";
 import { KeyRound, CheckCircle2, Loader2, Server } from "lucide-react";
 
@@ -9,6 +10,13 @@ export function ModelManagerFeature() {
     queryKey: ["models"],
     queryFn: getModels,
   });
+
+  const { data: workflowData } = useQuery({
+    queryKey: ["workflowConfig"],
+    queryFn: getWorkflowConfig,
+  });
+
+  const activeProviders = workflowData?.data?.llm_fallback_providers || ["gemini", "nvidia", "groq", "openai", "ollama", "huggingface", "mistral", "deepseek"];
 
   const [keys, setKeys] = useState<Record<string, string>>({});
   const [saveStatus, setSaveStatus] = useState<Record<string, 'idle' | 'saving' | 'success' | 'error'>>({});
@@ -55,12 +63,12 @@ export function ModelManagerFeature() {
         </p>
         
         <div className="flex flex-wrap gap-3">
-          {["gemini", "nvidia", "groq", "openai", "ollama", "huggingface", "mistral", "deepseek"].map((provider, i) => (
+          {activeProviders.map((provider, i) => (
             <div key={provider} className="flex items-center gap-3">
               <div className="flex items-center justify-center px-4 py-2 bg-panel/60 border border-primary/30 rounded-xl shadow-[0_0_15px_rgba(0,220,200,0.1)] text-text text-sm font-medium tracking-wide uppercase">
                 <span className="text-primary mr-2 opacity-50">{i + 1}.</span> {provider}
               </div>
-              {i < 7 && <span className="text-primary/40">→</span>}
+              {i < activeProviders.length - 1 && <span className="text-primary/40">→</span>}
             </div>
           ))}
         </div>

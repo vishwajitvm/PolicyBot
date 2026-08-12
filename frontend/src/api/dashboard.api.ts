@@ -27,7 +27,15 @@ export type DashboardStats = {
   timezone: string;
 };
 
-export const getDashboardStats = (days_filter?: number) => {
-  const query = days_filter !== undefined ? `?days_filter=${days_filter}` : "";
+export const getDashboardStats = (days_filter?: number, model_filter?: string) => {
+  const params = new URLSearchParams();
+  if (days_filter !== undefined) {
+    params.append('days_filter', days_filter.toString());
+  }
+  if (model_filter) {
+    params.append('model_filter', model_filter);
+  }
+  
+  const query = params.toString() ? `?${params.toString()}` : "";
   return apiClient<DashboardStats>(`/dashboard/stats${query}`);
 };

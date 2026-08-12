@@ -13,12 +13,14 @@ class OpenAIProvider(BaseLLMProvider, BaseEmbeddingProvider):
         self.api_key = ""
         self.base_url = ""
         self.chat_model = ""
+        self.embedding_model = ""
         
         # Configure dynamically based on provider name
         if provider_name == "openai":
             self.api_key = settings.openai_api_key
             self.base_url = "https://api.openai.com/v1"
             self.chat_model = settings.openai_chat_model
+            self.embedding_model = getattr(settings, "openai_embedding_model", "text-embedding-3-small")
         elif provider_name == "openrouter":
             self.api_key = settings.openrouter_api_key
             self.base_url = "https://openrouter.ai/api/v1"

@@ -8,7 +8,7 @@ from app.providers.gemini_provider import GeminiProvider
 from app.providers.local_provider import LocalProvider
 from app.providers.openai_provider import OpenAIProvider
 from app.providers.fallback_provider import FallbackLLMProvider, FallbackEmbeddingProvider
-
+from app.providers.huggingface_provider import HuggingFaceProvider
 class ProviderFactory:
     def __init__(self, settings: Settings):
         self.settings = settings
@@ -47,7 +47,6 @@ class ProviderFactory:
         # Default single provider logic
         provider = self.settings.llm_provider.lower()
         return self._create_single_llm(provider)
-
     def _create_single_embedding(self, provider: str) -> BaseEmbeddingProvider:
         provider = provider.lower().strip()
         if provider == "gemini":
@@ -56,6 +55,8 @@ class ProviderFactory:
             return OpenAIProvider(self.settings, provider_name="openai")
         if provider in {"local", "ollama"}:
             return LocalProvider(self.settings)
+        if provider == "huggingface":
+            return HuggingFaceProvider(self.settings)
         raise NotConfiguredError(f"Unsupported embedding provider: {provider}")
 
     def create_embedding(self) -> BaseEmbeddingProvider:

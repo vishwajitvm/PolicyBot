@@ -21,7 +21,8 @@ class ChatSessionRepository(BaseRepository):
     collection_name = "chat_sessions"
 
 @router.get("/dashboard/stats", response_model=ApiResponse)
-async def get_dashboard_stats(days_filter: int = None) -> ApiResponse:
+async def get_dashboard_stats(days_filter: int = None, model_filter: str = None) -> ApiResponse:
+    """Get overall dashboard statistics."""
     try:
         settings = get_settings()
         db = mongodb.db()
@@ -42,10 +43,21 @@ async def get_dashboard_stats(days_filter: int = None) -> ApiResponse:
         # For traces and chats, they might use 'created_at' or 'timestamp'
         trace_query = {}
         chat_query = {}
+        
+        and_conditions = []
         if days_filter is not None:
             start_date = get_current_time() - timedelta(days=days_filter)
-            trace_query = {"$or": [{"timestamp": {"$gte": start_date}}, {"created_at": {"$gte": start_date}}]}
+            and_conditions.append({"$or": [{"timestamp": {"$gte": start_date}}, {"created_at": {"$gte": start_date}}]})
             chat_query = {"$or": [{"timestamp": {"$gte": start_date}}, {"created_at": {"$gte": start_date}}]}
+            
+        if model_filter:
+            and_conditions.append({"events": {"$elemMatch": {"status": "success", "output_summary.model": model_filter}}})
+
+        if and_conditions:
+            if len(and_conditions) == 1:
+                trace_query = and_conditions[0]
+            else:
+                trace_query = {"$and": and_conditions}
 
         # Documents indexed: count of documents
         documents_indexed = await doc_repo.collection.count_documents({})
@@ -89,11 +101,24 @@ async def get_dashboard_stats(days_filter: int = None) -> ApiResponse:
                     
                     # Extract timestamp for trend
                     ts = t.get("timestamp") or t.get("created_at") or t.get("ts")
+                    if not ts:
+                        events = t.get("events", [])
+                        if events and len(events) > 0:
+                            ts = events[0].get("timestamp") if isinstance(events[0], dict) else getattr(events[0], "timestamp", None)
+                        elif "_id" in t:
+                            ts = t["_id"].generation_time
+                    
+                    # Compute total latency if missing
+                    latency = t.get("latency_ms", 0)
+                    if not latency:
+                        events = t.get("events", [])
+                        latency = sum([e.get("latency_ms", 0) if isinstance(e, dict) else getattr(e, "latency_ms", 0) for e in events])
+
                     if ts:
                         accuracy_trend.append({
                             "timestamp": ts if isinstance(ts, str) else ts.isoformat(),
                             "confidence": round(conf * 100, 2),
-                            "latency": t.get("latency_ms", 0)
+                            "latency": latency
                         })
             
             if confidences:
@@ -109,16 +134,32 @@ async def get_dashboard_stats(days_filter: int = None) -> ApiResponse:
             traces_with_ts = []
             for t in traces:
                 ts = t.get("timestamp") or t.get("created_at") or t.get("ts")
+                if not ts:
+                    events = t.get("events", [])
+                    if events and len(events) > 0:
+                        ts = events[0].get("timestamp") if isinstance(events[0], dict) else getattr(events[0], "timestamp", None)
+                    elif "_id" in t:
+                        ts = t["_id"].generation_time
                 if ts is not None:
                     traces_with_ts.append((ts, t))
             if traces_with_ts:
                 # Sort by timestamp descending
                 traces_with_ts.sort(key=lambda x: x[0], reverse=True)
                 latest_trace = traces_with_ts[0][1]
-                latest_query_latency = latest_trace.get("latency_ms", 0)
+                
+                latency = latest_trace.get("latency_ms", 0)
+                if not latency:
+                    events = latest_trace.get("events", [])
+                    latency = sum([e.get("latency_ms", 0) if isinstance(e, dict) else getattr(e, "latency_ms", 0) for e in events])
+                
+                latest_query_latency = latency
             else:
                 # If no timestamp, just take the first trace's latency
-                latest_query_latency = traces[0].get("latency_ms", 0)
+                latency = traces[0].get("latency_ms", 0)
+                if not latency:
+                    events = traces[0].get("events", [])
+                    latency = sum([e.get("latency_ms", 0) if isinstance(e, dict) else getattr(e, "latency_ms", 0) for e in events])
+                latest_query_latency = latency
 
         # Configuration details
         chunk_size = settings.chunk_size

@@ -52,18 +52,23 @@ export function Header({ onToggleSidebar }: HeaderProps) {
 </div>
       </div>
 
-      <Select
-        value={theme}
-        onChange={(event) => setTheme(event.target.value as ThemeName)}
-        aria-label="Theme selector"
-        className="w-28"
-      >
-        {themes.map((item) => (
-          <option key={item} value={item}>
-            {item}
-          </option>
-        ))}
-      </Select>
+      <div className="flex items-center gap-4">
+        <div className="hidden sm:flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary backdrop-blur-sm">
+          <span>{Intl.DateTimeFormat().resolvedOptions().timeZone}</span>
+        </div>
+        <Select
+          value={theme}
+          onChange={(event) => setTheme(event.target.value as ThemeName)}
+          aria-label="Theme selector"
+          className="w-28"
+        >
+          {themes.map((item) => (
+            <option key={item} value={item}>
+              {item}
+            </option>
+          ))}
+        </Select>
+      </div>
     </div>
   );
 }

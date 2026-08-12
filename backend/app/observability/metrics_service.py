@@ -23,7 +23,7 @@ class MetricsService:
             from tracenest import logger
             logger.error(f"Failed to log LLM metrics: {e}")
 
-    async def get_summary(self, days_filter: int = None, model_filter: str = None) -> Dict[str, Any]:
+    async def get_summary(self, days_filter: int = None, provider_filter: str = None) -> Dict[str, Any]:
         """Get aggregated metrics for the dashboard."""
         
         match_stage = {}
@@ -32,14 +32,8 @@ class MetricsService:
             start_date = get_current_time() - timedelta(days=days_filter)
             match_stage["timestamp"] = {"$gte": start_date}
             
-        if model_filter:
-            # model_filter can be 'provider / model' format from unique_models_list
-            if " / " in model_filter:
-                prov, mod = model_filter.split(" / ", 1)
-                match_stage["provider"] = prov
-                match_stage["model"] = mod
-            else:
-                match_stage["model"] = model_filter
+        if provider_filter:
+            match_stage["provider"] = provider_filter
 
         pipeline = []
         if match_stage:

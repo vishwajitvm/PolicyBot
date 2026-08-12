@@ -26,13 +26,13 @@ export type MetricsResponse = {
   timeseries?: TokenTimeseriesData[];
 };
 
-export const getMetrics = (days_filter?: number, model_filter?: string) => {
+export const getMetrics = (days_filter?: number, provider_filter?: string) => {
   const params = new URLSearchParams();
   if (days_filter !== undefined) {
     params.append('days_filter', days_filter.toString());
   }
-  if (model_filter) {
-    params.append('model_filter', model_filter);
+  if (provider_filter) {
+    params.append('provider_filter', provider_filter);
   }
   
   const query = params.toString() ? `?${params.toString()}` : "";

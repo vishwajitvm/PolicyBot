@@ -5,6 +5,6 @@ from app.schemas.common import ApiResponse
 router = APIRouter(prefix="/metrics", tags=["metrics"])
 
 @router.get("/", response_model=ApiResponse)
-async def get_metrics(days_filter: int = None, model_filter: str = None) -> ApiResponse:
-    data = await metrics_service.get_summary(days_filter, model_filter)
+async def get_metrics(days_filter: int = None, provider_filter: str = None) -> ApiResponse:
+    data = await metrics_service.get_summary(days_filter, provider_filter)
     return ApiResponse(data=data, message="Metrics retrieved successfully")

@@ -21,7 +21,7 @@ class ChatSessionRepository(BaseRepository):
     collection_name = "chat_sessions"
 
 @router.get("/dashboard/stats", response_model=ApiResponse)
-async def get_dashboard_stats(days_filter: int = None, model_filter: str = None) -> ApiResponse:
+async def get_dashboard_stats(days_filter: int = None, provider_filter: str = None) -> ApiResponse:
     """Get overall dashboard statistics."""
     try:
         settings = get_settings()
@@ -50,8 +50,8 @@ async def get_dashboard_stats(days_filter: int = None, model_filter: str = None)
             and_conditions.append({"$or": [{"timestamp": {"$gte": start_date}}, {"created_at": {"$gte": start_date}}]})
             chat_query = {"$or": [{"timestamp": {"$gte": start_date}}, {"created_at": {"$gte": start_date}}]}
             
-        if model_filter:
-            and_conditions.append({"events": {"$elemMatch": {"status": "success", "output_summary.model": model_filter}}})
+        if provider_filter:
+            and_conditions.append({"events": {"$elemMatch": {"status": "success", "output_summary.model": provider_filter}}})
 
         if and_conditions:
             if len(and_conditions) == 1:

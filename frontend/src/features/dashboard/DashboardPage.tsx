@@ -21,7 +21,7 @@ import {
 
 export function DashboardPageFeature() {
   const [daysFilter, setDaysFilter] = useState<number | undefined>(undefined);
-  const [modelFilter, setModelFilter] = useState<string | undefined>(undefined);
+  const [providerFilter, setProviderFilter] = useState<string | undefined>(undefined);
   const [isModelsModalOpen, setIsModelsModalOpen] = useState(false);
 
   const { data: healthData, error: healthError } = useQuery({
@@ -38,24 +38,61 @@ export function DashboardPageFeature() {
   });
 
   const { data: statsData } = useQuery({
-    queryKey: ["dashboard-stats", daysFilter, modelFilter],
-    queryFn: () => getDashboardStats(daysFilter, modelFilter),
+    queryKey: ["dashboard-stats", daysFilter, providerFilter],
+    queryFn: () => getDashboardStats(daysFilter, providerFilter),
     retry: false
   });
 
   const { data: metricsData } = useQuery({
-    queryKey: ["metrics", daysFilter, modelFilter],
-    queryFn: () => getMetrics(daysFilter, modelFilter),
+    queryKey: ["metrics", daysFilter, providerFilter],
+    queryFn: () => getMetrics(daysFilter, providerFilter),
     retry: false
   });
 
-  // Prepare chart data
-  const chartData = metricsData?.metrics.map(m => ({
-    name: `${m.provider} (${m.model})`,
-    tokens: m.total_tokens,
-    errors: m.failed_requests,
-    latency: m.avg_latency_ms
-  })) || [];
+  // Extract unique LLM providers for the dropdown
+  const uniqueProviders = Array.from(
+    new Set(baseStatsData?.unique_models_list?.map(m => m.split(" / ")[0]).filter(Boolean) || [])
+  );
+
+  // Prepare chart data:
+  // - "All Providers" → aggregate by LLM provider name
+  // - Specific provider selected → show individual models
+  const chartData = (() => {
+    const metrics = metricsData?.metrics || [];
+    if (!providerFilter) {
+      // Aggregate by provider
+      const providerMap = new Map<string, { tokens: number; errors: number; latency: number; count: number }>();
+      for (const m of metrics) {
+        const existing = providerMap.get(m.provider);
+        if (existing) {
+          existing.tokens += m.total_tokens;
+          existing.errors += m.failed_requests;
+          existing.latency += m.avg_latency_ms;
+          existing.count += 1;
+        } else {
+          providerMap.set(m.provider, { tokens: m.total_tokens, errors: m.failed_requests, latency: m.avg_latency_ms, count: 1 });
+        }
+      }
+      return Array.from(providerMap.entries()).map(([provider, data]) => ({
+        name: provider,
+        tokens: data.tokens,
+        errors: data.errors,
+        latency: Math.round(data.latency / data.count)
+      }));
+    } else {
+      // Show individual models for the selected provider
+      return metrics.map(m => ({
+        name: m.model,
+        tokens: m.total_tokens,
+        errors: m.failed_requests,
+        latency: m.avg_latency_ms
+      }));
+    }
+  })();
+
+  // Auto-calculate XAxis height based on longest label
+  const maxLabelLength = chartData.reduce((max, d) => Math.max(max, d.name.length), 0);
+  const xAxisHeight = Math.max(80, Math.min(200, maxLabelLength * 8 + 30));
 
   const timeseriesData = metricsData?.timeseries || [];
   
@@ -82,15 +119,15 @@ export function DashboardPageFeature() {
         
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-3 glass-panel p-2 rounded-xl">
-            <label className="text-sm text-gray-400 font-medium px-2">Model:</label>
+            <label className="text-sm text-gray-400 font-semibold px-2">LLM Provider:</label>
             <select 
-              className="bg-black/40 border border-white/10 text-white text-sm rounded-lg focus:ring-primary focus:border-primary block p-2 backdrop-blur-md outline-none transition-all cursor-pointer"
-              value={modelFilter === undefined ? "all" : modelFilter}
-              onChange={(e) => setModelFilter(e.target.value === "all" ? undefined : e.target.value)}
+              className="bg-black/40 border border-white/10 text-white text-sm rounded-lg focus:ring-primary focus:border-primary block p-2.5 backdrop-blur-md outline-none transition-all cursor-pointer min-w-[160px]"
+              value={providerFilter === undefined ? "all" : providerFilter}
+              onChange={(e) => setProviderFilter(e.target.value === "all" ? undefined : e.target.value)}
             >
-              <option value="all">All Models</option>
-              {baseStatsData?.unique_models_list?.map((modelStr) => (
-                <option key={modelStr} value={modelStr.split(" / ")[1]}>{modelStr.split(" / ")[1]}</option>
+              <option value="all">All Providers</option>
+              {uniqueProviders.map((prov) => (
+                <option key={prov} value={prov}>{prov}</option>
               ))}
             </select>
           </div>
@@ -232,26 +269,31 @@ export function DashboardPageFeature() {
       {/* Main Analytics Section */}
       <div className="glass-card p-6">
         <h3 className="font-semibold text-xl mb-6 text-glow">LLM Analytics & Fallback Performance</h3>
-        <div className="grid gap-8 lg:grid-cols-1">
+        <div className={`grid gap-8 ${providerFilter ? 'lg:grid-cols-2' : 'lg:grid-cols-1'}`}>
           
-          <div className="h-80 relative group">
+          <div className="relative group">
             <div className="absolute inset-0 bg-primary/5 blur-2xl rounded-full group-hover:bg-primary/10 transition-colors pointer-events-none"></div>
             <div className="mb-4">
-              <h4 className="text-sm font-medium text-primary tracking-wider uppercase">Tokens Consumed by Model</h4>
-              <p className="text-xs text-gray-500 mt-1">Total aggregated tokens across the selected time period per model.</p>
+              <h4 className="text-sm font-semibold text-primary tracking-wider uppercase">
+                {providerFilter ? `Tokens Consumed by Model (${providerFilter})` : 'Tokens Consumed by LLM Provider'}
+              </h4>
+              <p className="text-xs text-gray-500 mt-1">
+                {providerFilter ? `Individual model token usage for ${providerFilter}.` : 'Total aggregated tokens across all models per LLM provider.'}
+              </p>
             </div>
-            <div className="relative h-full w-full glass-panel p-4 pb-20">
+            <div className="relative w-full glass-panel p-4" style={{ height: `${xAxisHeight + 320}px` }}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 40 }}>
+                <BarChart data={chartData} margin={{ top: 10, right: 20, left: 10, bottom: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.1)" />
-                  <XAxis dataKey="name" tick={{fill: '#a1a1aa', fontSize: 10}} axisLine={{stroke: 'rgba(255,255,255,0.1)'}} angle={-35} textAnchor="end" interval={0} />
+                  <XAxis dataKey="name" height={xAxisHeight} tick={{fill: '#ffffff', fontSize: 16, fontWeight: 900}} axisLine={{stroke: 'rgba(255,255,255,0.2)'}} angle={-35} textAnchor="end" interval={0} tickMargin={12} />
                   <YAxis tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={{stroke: 'rgba(255,255,255,0.1)'}} />
                   <Tooltip 
                     cursor={{fill: 'rgba(var(--text), 0.05)'}}
                     contentStyle={{ backgroundColor: 'rgb(var(--panel))', border: '1px solid rgb(var(--border))', borderRadius: '12px', backdropFilter: 'blur(10px)' }}
                     itemStyle={{ color: '#00dcc8' }}
+                    labelStyle={{ color: '#fff', fontWeight: 700, fontSize: 14 }}
                   />
-                  <Legend wrapperStyle={{paddingTop: '20px'}}/>
+                  <Legend verticalAlign="top" wrapperStyle={{paddingBottom: '10px'}}/>
                   <Bar dataKey="tokens" fill="url(#colorTokens)" radius={[6, 6, 0, 0]} name="Total Tokens" />
                   <defs>
                     <linearGradient id="colorTokens" x1="0" y1="0" x2="0" y2="1">
@@ -264,24 +306,29 @@ export function DashboardPageFeature() {
             </div>
           </div>
           
-          <div className="h-80 relative group">
+          <div className={`relative group ${providerFilter ? '' : 'mt-8'}`}>
              <div className="absolute inset-0 bg-secondary/5 blur-2xl rounded-full group-hover:bg-secondary/10 transition-colors pointer-events-none"></div>
             <div className="mb-4">
-              <h4 className="text-sm font-medium text-secondary tracking-wider uppercase">Latency & Error Rates</h4>
-              <p className="text-xs text-gray-500 mt-1">Average generation latency (ms) vs total error occurrences per model.</p>
+              <h4 className="text-sm font-semibold text-secondary tracking-wider uppercase">
+                {providerFilter ? `Latency & Error Rates (${providerFilter})` : 'Latency & Error Rates by LLM Provider'}
+              </h4>
+              <p className="text-xs text-gray-500 mt-1">
+                {providerFilter ? `Per-model latency and errors for ${providerFilter}.` : 'Average latency and error counts aggregated per LLM provider.'}
+              </p>
             </div>
-            <div className="relative h-full w-full glass-panel p-4 pb-20">
+            <div className="relative w-full glass-panel p-4" style={{ height: `${xAxisHeight + 320}px` }}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 40 }}>
+                <BarChart data={chartData} margin={{ top: 10, right: 20, left: 10, bottom: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.1)" />
-                  <XAxis dataKey="name" tick={{fill: '#a1a1aa', fontSize: 10}} axisLine={{stroke: 'rgba(255,255,255,0.1)'}} angle={-35} textAnchor="end" interval={0} />
+                  <XAxis dataKey="name" height={xAxisHeight} tick={{fill: '#ffffff', fontSize: 16, fontWeight: 900}} axisLine={{stroke: 'rgba(255,255,255,0.2)'}} angle={-35} textAnchor="end" interval={0} tickMargin={12} />
                   <YAxis yAxisId="left" tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={{stroke: 'rgba(255,255,255,0.1)'}} />
                   <YAxis yAxisId="right" orientation="right" tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={{stroke: 'rgba(255,255,255,0.1)'}} />
                   <Tooltip 
                     cursor={{fill: 'rgba(var(--text), 0.05)'}}
                     contentStyle={{ backgroundColor: 'rgb(var(--panel))', border: '1px solid rgb(var(--border))', borderRadius: '12px', backdropFilter: 'blur(10px)' }}
+                    labelStyle={{ color: '#fff', fontWeight: 700, fontSize: 14 }}
                   />
-                  <Legend wrapperStyle={{paddingTop: '20px'}}/>
+                  <Legend verticalAlign="top" wrapperStyle={{paddingBottom: '10px'}}/>
                   <Bar yAxisId="left" dataKey="latency" fill="url(#colorLatency)" radius={[6, 6, 0, 0]} name="Latency (ms)" />
                   <Bar yAxisId="right" dataKey="errors" fill="url(#colorErrors)" radius={[6, 6, 0, 0]} name="Error Count" />
                   <defs>
@@ -424,11 +471,20 @@ export function DashboardPageFeature() {
             >
               ✕
             </button>
-            <h3 className="text-2xl font-semibold text-white mb-2">Available Models</h3>
-            <p className="text-gray-400 text-sm mb-6">List of all AI models that have been used by this system.</p>
+            <h3 className="text-2xl font-semibold text-white mb-2">
+              {providerFilter ? `Models for ${providerFilter}` : 'All Available Models'}
+            </h3>
+            <p className="text-gray-400 text-sm mb-6">
+              {providerFilter 
+                ? `Showing models belonging to the "${providerFilter}" LLM provider.`
+                : 'List of all AI models that have been used by this system.'}
+            </p>
             
             <div className="space-y-3 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
-              {statsData?.unique_models_list?.map((modelStr, idx) => {
+              {(providerFilter 
+                ? statsData?.unique_models_list?.filter(m => m.split(" / ")[0] === providerFilter)
+                : statsData?.unique_models_list
+              )?.map((modelStr, idx) => {
                 const [provider, modelName] = modelStr.split(" / ");
                 return (
                   <div key={idx} className="glass-panel p-4 flex items-center justify-between group hover:bg-white/5 transition-colors rounded-xl">
@@ -437,7 +493,7 @@ export function DashboardPageFeature() {
                         {provider.charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <p className="text-white font-medium">{modelName}</p>
+                        <p className="text-white font-semibold">{modelName}</p>
                         <p className="text-xs text-gray-400 uppercase tracking-wider">{provider}</p>
                       </div>
                     </div>
@@ -445,9 +501,11 @@ export function DashboardPageFeature() {
                   </div>
                 );
               })}
-              {(!statsData?.unique_models_list || statsData.unique_models_list.length === 0) && (
+              {(!statsData?.unique_models_list || (providerFilter 
+                ? statsData.unique_models_list.filter(m => m.split(" / ")[0] === providerFilter).length === 0
+                : statsData.unique_models_list.length === 0)) && (
                 <div className="text-center py-8 text-gray-500">
-                  No models found in the database.
+                  No models found{providerFilter ? ` for provider "${providerFilter}"` : ' in the database'}.
                 </div>
               )}
             </div>

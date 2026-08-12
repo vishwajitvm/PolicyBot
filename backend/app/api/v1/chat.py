@@ -1,3 +1,4 @@
+from app.core.time import get_current_time
 from fastapi import APIRouter, Depends, HTTPException, status
 from app.core.config import get_settings, Settings
 from app.db.mongodb import mongodb
@@ -64,7 +65,7 @@ async def create_chat_session(
     logger.info("Received request to create chat session")
     try:
         session_dict = session_in.model_dump()
-        now = datetime.utcnow()
+        now = get_current_time()
         session_dict["created_at"] = now
         session_dict["updated_at"] = now
         session_dict["is_deleted"] = False
@@ -132,7 +133,7 @@ async def rename_chat_session(
     logger.info(f"Received request to rename chat session: {session_id}")
     try:
         update_dict = session_update.model_dump(exclude_unset=True)
-        update_dict["updated_at"] = datetime.utcnow()
+        update_dict["updated_at"] = get_current_time()
         result = await session_repo.collection.update_one(
             {"_id": ObjectId(session_id), "is_deleted": False},
             {"$set": update_dict},
@@ -154,7 +155,7 @@ async def delete_chat_session(
     try:
         result = await session_repo.collection.update_one(
             {"_id": ObjectId(session_id), "is_deleted": False},
-            {"$set": {"is_deleted": True, "updated_at": datetime.utcnow()}},
+            {"$set": {"is_deleted": True, "updated_at": get_current_time()}},
         )
         if result.matched_count == 0:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chat session not found")
@@ -183,7 +184,7 @@ async def send_message(
         user_message_dict["content"] = message_in.question
         user_message_dict["session_id"] = session_id
         user_message_dict["role"] = "user"
-        user_message_dict["created_at"] = datetime.utcnow()
+        user_message_dict["created_at"] = get_current_time()
         # The trace_id and other metadata will be None for user message
         user_message_dict["trace_id"] = None
         user_message_dict["model"] = None
@@ -222,7 +223,7 @@ async def send_message(
             "session_id": session_id,
             "role": "assistant",
             "content": rag_response.answer,
-            "created_at": datetime.utcnow(),
+            "created_at": get_current_time(),
             "trace_id": str(rag_response.trace_id) if rag_response.trace_id is not None else None,
             "model": rag_response.model,
             "embedding_provider": rag_response.embedding_model,
@@ -241,7 +242,7 @@ async def send_message(
         # Update the session's updated_at
         await session_repo.collection.update_one(
             {"_id": ObjectId(session_id)},
-            {"$set": {"updated_at": datetime.utcnow()}},
+            {"$set": {"updated_at": get_current_time()}},
         )
 
         # Return the created user and assistant messages

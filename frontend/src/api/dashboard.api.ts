@@ -11,6 +11,10 @@ export type DashboardStats = {
   chunks_indexed: number;
   sources_connected: number;
   running_jobs: number;
+  total_document_versions: number;
+  duplicate_documents: number;
+  total_chat_sessions: number;
+  unique_models_list: string[];
   average_confidence: number;
   accuracy_trend: AccuracyTrend[];
   latest_query_latency: number;
@@ -20,6 +24,10 @@ export type DashboardStats = {
   llm_provider: string;
   embedding_provider: string;
   vector_db_provider: string;
+  timezone: string;
 };
 
-export const getDashboardStats = () => apiClient<DashboardStats>("/dashboard/stats");
+export const getDashboardStats = (days_filter?: number) => {
+  const query = days_filter !== undefined ? `?days_filter=${days_filter}` : "";
+  return apiClient<DashboardStats>(`/dashboard/stats${query}`);
+};

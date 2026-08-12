@@ -1,3 +1,4 @@
+from app.core.time import get_current_time
 from tracenest import logger
 from datetime import datetime
 from uuid import uuid4
@@ -32,7 +33,7 @@ async def create_local_source(payload: SourceCreateLocal) -> ApiResponse:
             source_id=str(uuid4()),
             name=payload.name or payload.folder_path,
             source_type="local_folder",
-            created_at=datetime.utcnow(),
+            created_at=get_current_time(),
             metadata={"folder_path": payload.folder_path},
         ).model_dump()
         await SourceRepository(mongodb.db()).insert_one(source)
@@ -50,7 +51,7 @@ async def create_drive_source(payload: SourceCreateDrive) -> ApiResponse:
             source_id=str(uuid4()),
             name=payload.name,
             source_type="google_drive",
-            created_at=datetime.utcnow(),
+            created_at=get_current_time(),
             metadata=payload.model_dump(),
         ).model_dump()
         await SourceRepository(mongodb.db()).insert_one(source)

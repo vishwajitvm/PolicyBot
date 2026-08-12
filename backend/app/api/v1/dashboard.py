@@ -1,3 +1,5 @@
+from app.core.time import get_current_time
+import os
 from fastapi import APIRouter
 from app.core.config import get_settings
 from app.schemas.common import ApiResponse
@@ -6,12 +8,20 @@ from app.db.repositories.chunk_repository import ChunkRepository
 from app.db.repositories.source_repository import SourceRepository
 from app.db.repositories.ingestion_job_repository import IngestionJobRepository
 from app.db.repositories.trace_repository import TraceRepository
+from app.db.repositories.base_repository import BaseRepository
 from app.db.mongodb import mongodb
+from datetime import datetime, timedelta, UTC
 
 router = APIRouter()
 
+class DocumentVersionRepository(BaseRepository):
+    collection_name = "document_versions"
+
+class ChatSessionRepository(BaseRepository):
+    collection_name = "chat_sessions"
+
 @router.get("/dashboard/stats", response_model=ApiResponse)
-async def get_dashboard_stats() -> ApiResponse:
+async def get_dashboard_stats(days_filter: int = None) -> ApiResponse:
     try:
         settings = get_settings()
         db = mongodb.db()
@@ -20,6 +30,22 @@ async def get_dashboard_stats() -> ApiResponse:
         source_repo = SourceRepository(db)
         job_repo = IngestionJobRepository(db)
         trace_repo = TraceRepository(db)
+        doc_version_repo = DocumentVersionRepository(db)
+        chat_repo = ChatSessionRepository(db)
+
+        # Time filter
+        match_query = {}
+        if days_filter is not None:
+            start_date = get_current_time() - timedelta(days=days_filter)
+            match_query = {"timestamp": {"$gte": start_date}}
+
+        # For traces and chats, they might use 'created_at' or 'timestamp'
+        trace_query = {}
+        chat_query = {}
+        if days_filter is not None:
+            start_date = get_current_time() - timedelta(days=days_filter)
+            trace_query = {"$or": [{"timestamp": {"$gte": start_date}}, {"created_at": {"$gte": start_date}}]}
+            chat_query = {"$or": [{"timestamp": {"$gte": start_date}}, {"created_at": {"$gte": start_date}}]}
 
         # Documents indexed: count of documents
         documents_indexed = await doc_repo.collection.count_documents({})
@@ -32,9 +58,25 @@ async def get_dashboard_stats() -> ApiResponse:
 
         # Running jobs: count of ingestion jobs with status "running"
         running_jobs = await job_repo.collection.count_documents({"status": "running"})
+        
+        # New counts
+        total_document_versions = await doc_version_repo.collection.count_documents({})
+        duplicate_documents = max(0, total_document_versions - documents_indexed)
+        total_chat_sessions = await chat_repo.collection.count_documents(chat_query)
+
+        # Unique models from metrics
+        metrics_coll = db["llm_metrics"]
+        unique_providers = await metrics_coll.distinct("provider")
+        unique_models = await metrics_coll.distinct("model")
+        unique_models_list = []
+        for p in unique_providers:
+            # get models for provider
+            p_models = await metrics_coll.distinct("model", {"provider": p})
+            for m in p_models:
+                unique_models_list.append(f"{p} / {m}")
 
         # Average confidence and accuracy trend
-        traces = await trace_repo.find_many()
+        traces = await trace_repo.find_many(trace_query)
         average_confidence = 0.0
         accuracy_trend = []
         if traces:
@@ -89,6 +131,10 @@ async def get_dashboard_stats() -> ApiResponse:
             "chunks_indexed": chunks_indexed,
             "sources_connected": sources_connected,
             "running_jobs": running_jobs,
+            "total_document_versions": total_document_versions,
+            "duplicate_documents": duplicate_documents,
+            "total_chat_sessions": total_chat_sessions,
+            "unique_models_list": unique_models_list,
             "average_confidence": round(average_confidence * 100, 2),  # Convert to percentage
             "accuracy_trend": accuracy_trend,
             "latest_query_latency": latest_query_latency,
@@ -98,6 +144,7 @@ async def get_dashboard_stats() -> ApiResponse:
             "llm_provider": llm_provider,
             "embedding_provider": embedding_provider,
             "vector_db_provider": vector_db_provider,
+            "timezone": os.getenv("APP_TIMEZONE", "UTC"),
         }
 
         return ApiResponse(data=stats, message="Dashboard stats retrieved successfully")

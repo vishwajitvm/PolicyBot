@@ -1,3 +1,4 @@
+from app.core.time import get_current_time
 from tracenest import logger
 from datetime import datetime
 from fastapi import APIRouter, BackgroundTasks, Request, WebSocket, WebSocketDisconnect
@@ -45,8 +46,8 @@ async def run_ingestion_task(source_id: str, job_id: str, request: Request):
             "status": "failed",
             "errors": [str(exc)],
             "logs": ["Ingestion failed in background task"],
-            "created_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow(),
+            "created_at": get_current_time(),
+            "updated_at": get_current_time(),
         })
         job = _sanitize_for_json(job)
         await IngestionJobRepository(mongodb.db()).insert_one(job)
@@ -77,8 +78,8 @@ async def create_job(payload: IngestionJobCreate, request: Request, background_t
             "status": "failed",
             "errors": [str(exc)],
             "logs": ["Ingestion failed to start"],
-            "created_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow(),
+            "created_at": get_current_time(),
+            "updated_at": get_current_time(),
         })
         logger.info("Failed ingestion job dict: %s", job)
         job = _sanitize_for_json(job)
@@ -126,7 +127,7 @@ async def cancel_ingestion_job(job_id: str) -> ApiResponse:
             job["status"] = "cancelled"
             job["phase"] = "cancelled"
             job["logs"].append("Job manually cancelled by user.")
-            job["updated_at"] = datetime.utcnow()
+            job["updated_at"] = get_current_time()
             await IngestionJobRepository(mongodb.db()).upsert_one({"job_id": job_id}, job)
             
             # Broadcast the cancellation to listening WebSockets

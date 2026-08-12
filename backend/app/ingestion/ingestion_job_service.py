@@ -1,3 +1,4 @@
+from app.core.time import get_current_time
 from datetime import datetime
 from uuid import uuid4
 
@@ -13,6 +14,6 @@ class IngestionJobService:
             status="queued",
             phase="queued",
             progress_percent=0.0,
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow(),
+            created_at=get_current_time(),
+            updated_at=get_current_time(),
         )

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getHealth } from "../../api/health.api";
 import { getDashboardStats } from "../../api/dashboard.api";
@@ -19,6 +20,9 @@ import {
 } from "recharts";
 
 export function DashboardPageFeature() {
+  const [daysFilter, setDaysFilter] = useState<number | undefined>(undefined);
+  const [isModelsModalOpen, setIsModelsModalOpen] = useState(false);
+
   const { data: healthData, error: healthError } = useQuery({
     queryKey: ["health"],
     queryFn: getHealth,
@@ -26,14 +30,14 @@ export function DashboardPageFeature() {
   });
   
   const { data: statsData } = useQuery({
-    queryKey: ["dashboard-stats"],
-    queryFn: getDashboardStats,
+    queryKey: ["dashboard-stats", daysFilter],
+    queryFn: () => getDashboardStats(daysFilter),
     retry: false
   });
 
   const { data: metricsData } = useQuery({
-    queryKey: ["metrics"],
-    queryFn: getMetrics,
+    queryKey: ["metrics", daysFilter],
+    queryFn: () => getMetrics(daysFilter),
     retry: false
   });
 
@@ -58,15 +62,89 @@ export function DashboardPageFeature() {
 
   return (
     <div className="space-y-6">
-      {/* Top Cards Row */}
+      
+      {/* Date Filter & Title Row */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold text-white tracking-tight">Analytics Command Center</h1>
+            {statsData?.timezone && (
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/20 text-primary border border-primary/30 shadow-[0_0_10px_rgba(0,220,200,0.2)]">
+                {statsData.timezone}
+              </span>
+            )}
+          </div>
+          <p className="text-gray-400 text-sm mt-1">Deep insights into RAG performance and model health</p>
+        </div>
+        
+        <div className="flex items-center gap-3 glass-panel p-2 rounded-xl">
+          <label className="text-sm text-gray-400 font-medium px-2">Time Range:</label>
+          <select 
+            className="bg-black/40 border border-white/10 text-white text-sm rounded-lg focus:ring-primary focus:border-primary block p-2 backdrop-blur-md outline-none transition-all cursor-pointer"
+            value={daysFilter === undefined ? "all" : daysFilter}
+            onChange={(e) => setDaysFilter(e.target.value === "all" ? undefined : Number(e.target.value))}
+          >
+            <option value="all">All Time</option>
+            <option value="0">Today</option>
+            <option value="1">Yesterday</option>
+            <option value="3">Last 3 Days</option>
+            <option value="7">Last Week</option>
+            <option value="30">Last Month</option>
+            <option value="90">Last 3 Months (Max)</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Top Cards Row (Existing basic stats) */}
       <DashboardCards stats={statsData} />
+
+      {/* Advanced Stats Row */}
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="glass-card p-5 relative overflow-hidden group">
+          <div className="absolute -right-6 -top-6 w-24 h-24 bg-blue-500/20 rounded-full blur-2xl group-hover:bg-blue-500/30 transition-all"></div>
+          <p className="text-sm text-gray-400 font-medium tracking-wide uppercase mb-1">Total Document Versions</p>
+          <p className="text-3xl font-bold text-white">{statsData?.total_document_versions || 0}</p>
+        </div>
+        
+        <div className="glass-card p-5 relative overflow-hidden group">
+          <div className="absolute -right-6 -top-6 w-24 h-24 bg-orange-500/20 rounded-full blur-2xl group-hover:bg-orange-500/30 transition-all"></div>
+          <p className="text-sm text-gray-400 font-medium tracking-wide uppercase mb-1">Duplicate Documents</p>
+          <p className="text-3xl font-bold text-white">{statsData?.duplicate_documents || 0}</p>
+          <p className="text-xs text-gray-500 mt-2">Versions existing beyond unique base docs</p>
+        </div>
+
+        <div className="glass-card p-5 relative overflow-hidden group">
+          <div className="absolute -right-6 -top-6 w-24 h-24 bg-green-500/20 rounded-full blur-2xl group-hover:bg-green-500/30 transition-all"></div>
+          <p className="text-sm text-gray-400 font-medium tracking-wide uppercase mb-1">Total Chat Sessions</p>
+          <p className="text-3xl font-bold text-white">{statsData?.total_chat_sessions || 0}</p>
+        </div>
+
+        <div 
+          className="glass-card p-5 relative overflow-hidden group cursor-pointer hover:border-primary/50 transition-colors"
+          onClick={() => setIsModelsModalOpen(true)}
+        >
+          <div className="absolute -right-6 -top-6 w-24 h-24 bg-primary/20 rounded-full blur-2xl group-hover:bg-primary/40 transition-all"></div>
+          <p className="text-sm text-gray-400 font-medium tracking-wide uppercase mb-1">Active Models</p>
+          <div className="flex items-center justify-between">
+            <p className="text-3xl font-bold text-white">{statsData?.unique_models_list?.length || 0}</p>
+            <span className="text-xs px-3 py-1 bg-primary/20 text-primary rounded-full font-medium group-hover:bg-primary group-hover:text-black transition-colors">
+              View All ➔
+            </span>
+          </div>
+        </div>
+      </div>
 
       {/* Timeseries Trends */}
       <div className="grid gap-8 lg:grid-cols-2">
         {/* Usage Over Time */}
         <div className="glass-card p-6 relative group">
-          <div className="absolute inset-0 bg-primary/5 blur-2xl rounded-xl group-hover:bg-primary/10 transition-colors"></div>
-          <h3 className="font-semibold text-xl mb-6 text-glow relative z-10">Token Usage Over Time</h3>
+          <div className="absolute inset-0 bg-primary/5 blur-2xl rounded-xl group-hover:bg-primary/10 transition-colors pointer-events-none"></div>
+          <div className="flex justify-between items-start mb-4 relative z-10">
+            <div>
+              <h3 className="font-semibold text-xl text-glow">Token Usage Over Time</h3>
+              <p className="text-xs text-gray-400 mt-1">Formula: Sum of Input + Output Tokens for all requests on a given day.</p>
+            </div>
+          </div>
           <div className="h-64 relative w-full glass-panel p-4 z-10">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={timeseriesData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -90,23 +168,39 @@ export function DashboardPageFeature() {
           </div>
         </div>
 
-        {/* Accuracy Trend */}
+        {/* Success vs Error Trends */}
         <div className="glass-card p-6 relative group">
-          <div className="absolute inset-0 bg-secondary/5 blur-2xl rounded-xl group-hover:bg-secondary/10 transition-colors"></div>
-          <h3 className="font-semibold text-xl mb-6 text-glow relative z-10">RAG Accuracy & Confidence Trend</h3>
+          <div className="absolute inset-0 bg-secondary/5 blur-2xl rounded-xl group-hover:bg-secondary/10 transition-colors pointer-events-none"></div>
+          <div className="flex justify-between items-start mb-4 relative z-10">
+            <div>
+              <h3 className="font-semibold text-xl text-glow">Success vs Error Rate</h3>
+              <p className="text-xs text-gray-400 mt-1">Formula: Success Rate = Successful Requests / Total Requests per day.</p>
+            </div>
+          </div>
           <div className="h-64 relative w-full glass-panel p-4 z-10">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={accuracyTrendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <AreaChart data={timeseriesData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorSuccess" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#4ade80" stopOpacity={0.6}/>
+                    <stop offset="95%" stopColor="#4ade80" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="colorError" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#f87171" stopOpacity={0.6}/>
+                    <stop offset="95%" stopColor="#f87171" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.1)" />
-                <XAxis dataKey="time" tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={{stroke: 'rgba(255,255,255,0.1)'}} />
-                <YAxis domain={[0, 100]} tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={{stroke: 'rgba(255,255,255,0.1)'}} />
+                <XAxis dataKey="date" tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={{stroke: 'rgba(255,255,255,0.1)'}} />
+                <YAxis tickFormatter={(val) => `${(val * 100).toFixed(0)}%`} tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={{stroke: 'rgba(255,255,255,0.1)'}} domain={[0, 1]} />
                 <Tooltip 
+                  formatter={(val: number) => [`${(val * 100).toFixed(1)}%`, undefined]}
                   contentStyle={{ backgroundColor: 'rgb(var(--panel))', border: '1px solid rgb(var(--border))', borderRadius: '12px', backdropFilter: 'blur(10px)' }}
-                  itemStyle={{ color: '#b464ff' }}
                 />
                 <Legend wrapperStyle={{paddingTop: '20px'}}/>
-                <Line type="monotone" dataKey="confidence" stroke="#b464ff" strokeWidth={3} dot={{ fill: '#b464ff', strokeWidth: 2 }} activeDot={{ r: 8 }} name="Confidence (%)" />
-              </LineChart>
+                <Area type="monotone" dataKey="success_rate" stroke="#4ade80" fillOpacity={1} fill="url(#colorSuccess)" name="Success Rate" />
+                <Area type="monotone" dataKey="error_rate" stroke="#f87171" fillOpacity={1} fill="url(#colorError)" name="Error Rate" />
+              </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
@@ -118,9 +212,12 @@ export function DashboardPageFeature() {
         <div className="grid gap-8 lg:grid-cols-2">
           
           <div className="h-80 relative group">
-            <div className="absolute inset-0 bg-primary/5 blur-2xl rounded-full group-hover:bg-primary/10 transition-colors"></div>
-            <h4 className="text-sm font-medium mb-4 text-primary tracking-wider uppercase">Tokens Consumed by Model</h4>
-            <div className="relative h-full w-full glass-panel p-4">
+            <div className="absolute inset-0 bg-primary/5 blur-2xl rounded-full group-hover:bg-primary/10 transition-colors pointer-events-none"></div>
+            <div className="mb-4">
+              <h4 className="text-sm font-medium text-primary tracking-wider uppercase">Tokens Consumed by Model</h4>
+              <p className="text-xs text-gray-500 mt-1">Total aggregated tokens across the selected time period per model.</p>
+            </div>
+            <div className="relative h-full w-full glass-panel p-4 pb-12">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.1)" />
@@ -145,9 +242,12 @@ export function DashboardPageFeature() {
           </div>
           
           <div className="h-80 relative group">
-             <div className="absolute inset-0 bg-secondary/5 blur-2xl rounded-full group-hover:bg-secondary/10 transition-colors"></div>
-            <h4 className="text-sm font-medium mb-4 text-secondary tracking-wider uppercase">Latency & Error Rates</h4>
-            <div className="relative h-full w-full glass-panel p-4">
+             <div className="absolute inset-0 bg-secondary/5 blur-2xl rounded-full group-hover:bg-secondary/10 transition-colors pointer-events-none"></div>
+            <div className="mb-4">
+              <h4 className="text-sm font-medium text-secondary tracking-wider uppercase">Latency & Error Rates</h4>
+              <p className="text-xs text-gray-500 mt-1">Average generation latency (ms) vs total error occurrences per model.</p>
+            </div>
+            <div className="relative h-full w-full glass-panel p-4 pb-12">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.1)" />
@@ -157,7 +257,6 @@ export function DashboardPageFeature() {
                   <Tooltip 
                     cursor={{fill: 'rgba(var(--text), 0.05)'}}
                     contentStyle={{ backgroundColor: 'rgb(var(--panel))', border: '1px solid rgb(var(--border))', borderRadius: '12px', backdropFilter: 'blur(10px)' }}
-                    itemStyle={{ color: '#b464ff' }}
                   />
                   <Legend wrapperStyle={{paddingTop: '20px'}}/>
                   <Bar yAxisId="left" dataKey="latency" fill="url(#colorLatency)" radius={[6, 6, 0, 0]} name="Latency (ms)" />
@@ -180,6 +279,32 @@ export function DashboardPageFeature() {
         </div>
       </div>
 
+      {/* Accuracy Trend */}
+      <div className="glass-card p-6 relative group">
+        <div className="absolute inset-0 bg-secondary/5 blur-2xl rounded-xl group-hover:bg-secondary/10 transition-colors pointer-events-none"></div>
+        <div className="flex justify-between items-start mb-4 relative z-10">
+          <div>
+            <h3 className="font-semibold text-xl text-glow">RAG Accuracy & Confidence Trend</h3>
+            <p className="text-xs text-gray-400 mt-1">Formula: Evaluated answer confidence score extracted directly from live query traces.</p>
+          </div>
+        </div>
+        <div className="h-64 relative w-full glass-panel p-4 z-10">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={accuracyTrendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.1)" />
+              <XAxis dataKey="time" tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={{stroke: 'rgba(255,255,255,0.1)'}} />
+              <YAxis domain={[0, 100]} tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={{stroke: 'rgba(255,255,255,0.1)'}} />
+              <Tooltip 
+                contentStyle={{ backgroundColor: 'rgb(var(--panel))', border: '1px solid rgb(var(--border))', borderRadius: '12px', backdropFilter: 'blur(10px)' }}
+                itemStyle={{ color: '#b464ff' }}
+              />
+              <Legend wrapperStyle={{paddingTop: '20px'}}/>
+              <Line type="monotone" dataKey="confidence" stroke="#b464ff" strokeWidth={3} dot={{ fill: '#b464ff', strokeWidth: 2 }} activeDot={{ r: 8 }} name="Confidence (%)" />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
       {/* Detailed Metrics Table */}
       <div className="glass-card p-6 overflow-hidden">
         <h3 className="font-semibold text-xl mb-6 text-glow">Detailed LLM Performance Report</h3>
@@ -191,6 +316,7 @@ export function DashboardPageFeature() {
                 <th scope="col" className="px-6 py-4">Model</th>
                 <th scope="col" className="px-6 py-4">Endpoint Type</th>
                 <th scope="col" className="px-6 py-4">Requests (Success/Fail)</th>
+                <th scope="col" className="px-6 py-4">Success Rate</th>
                 <th scope="col" className="px-6 py-4">Error Rate</th>
                 <th scope="col" className="px-6 py-4">Total Tokens</th>
                 <th scope="col" className="px-6 py-4">Avg Latency (ms)</th>
@@ -209,6 +335,11 @@ export function DashboardPageFeature() {
                     </span>
                   </td>
                   <td className="px-6 py-4">
+                    <span className="text-green-400">
+                      {(m.success_rate * 100).toFixed(1)}%
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
                     <span className={m.error_rate > 0 ? "text-red-400 font-semibold" : "text-green-400"}>
                       {(m.error_rate * 100).toFixed(1)}%
                     </span>
@@ -219,7 +350,7 @@ export function DashboardPageFeature() {
               ))}
               {(!metricsData?.metrics || metricsData.metrics.length === 0) && (
                 <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-gray-500">No performance data available yet.</td>
+                  <td colSpan={8} className="px-6 py-8 text-center text-gray-500">No performance data available for this time period.</td>
                 </tr>
               )}
             </tbody>
@@ -232,7 +363,7 @@ export function DashboardPageFeature() {
         <h3 className="font-semibold text-xl mb-6 text-glow">System Infrastructure Health</h3>
         <div className="grid gap-6 md:grid-cols-3">
           <div className="p-5 glass-panel relative overflow-hidden group hover:border-primary/50 transition-colors">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full blur-xl group-hover:bg-primary/20 transition-all"></div>
+            <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full blur-xl group-hover:bg-primary/20 transition-all pointer-events-none"></div>
             <p className="text-sm text-gray-400 mb-2 uppercase tracking-wide">Backend API</p>
             <div className="flex items-center gap-3">
               <div className={`w-3 h-3 rounded-full shadow-[0_0_10px] ${healthData?.status === "ok" ? "bg-green-400 shadow-green-400/50" : "bg-red-400 shadow-red-400/50"}`}></div>
@@ -243,7 +374,7 @@ export function DashboardPageFeature() {
           </div>
           
           <div className="p-5 glass-panel relative overflow-hidden group hover:border-secondary/50 transition-colors">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-secondary/10 rounded-full blur-xl group-hover:bg-secondary/20 transition-all"></div>
+            <div className="absolute top-0 right-0 w-24 h-24 bg-secondary/10 rounded-full blur-xl group-hover:bg-secondary/20 transition-all pointer-events-none"></div>
             <p className="text-sm text-gray-400 mb-2 uppercase tracking-wide">MongoDB Store</p>
             <div className="flex items-center gap-3">
               <div className={`w-3 h-3 rounded-full shadow-[0_0_10px] ${healthData?.mongodb.status === "ok" ? "bg-green-400 shadow-green-400/50" : "bg-yellow-400 shadow-yellow-400/50"}`}></div>
@@ -254,7 +385,7 @@ export function DashboardPageFeature() {
           </div>
           
           <div className="p-5 glass-panel relative overflow-hidden group hover:border-white/50 transition-colors">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full blur-xl group-hover:bg-white/10 transition-all"></div>
+            <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full blur-xl group-hover:bg-white/10 transition-all pointer-events-none"></div>
             <p className="text-sm text-gray-400 mb-2 uppercase tracking-wide">Vector DB (Qdrant)</p>
             <div className="flex items-center gap-3">
               <div className={`w-3 h-3 rounded-full shadow-[0_0_10px] ${healthData?.vector_store.status === "ok" ? "bg-green-400 shadow-green-400/50" : "bg-yellow-400 shadow-yellow-400/50"}`}></div>
@@ -265,6 +396,48 @@ export function DashboardPageFeature() {
           </div>
         </div>
       </div>
+
+      {/* Models Modal */}
+      {isModelsModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="glass-card w-full max-w-lg p-6 relative animate-in fade-in zoom-in duration-200">
+            <button 
+              onClick={() => setIsModelsModalOpen(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+            >
+              ✕
+            </button>
+            <h3 className="text-2xl font-semibold text-white mb-2">Available Models</h3>
+            <p className="text-gray-400 text-sm mb-6">List of all AI models that have been used by this system.</p>
+            
+            <div className="space-y-3 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
+              {statsData?.unique_models_list?.map((modelStr, idx) => {
+                const [provider, modelName] = modelStr.split(" / ");
+                return (
+                  <div key={idx} className="glass-panel p-4 flex items-center justify-between group hover:bg-white/5 transition-colors rounded-xl">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
+                        {provider.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="text-white font-medium">{modelName}</p>
+                        <p className="text-xs text-gray-400 uppercase tracking-wider">{provider}</p>
+                      </div>
+                    </div>
+                    <div className="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
+                  </div>
+                );
+              })}
+              {(!statsData?.unique_models_list || statsData.unique_models_list.length === 0) && (
+                <div className="text-center py-8 text-gray-500">
+                  No models found in the database.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

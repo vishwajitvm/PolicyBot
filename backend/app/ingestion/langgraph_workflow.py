@@ -1,3 +1,4 @@
+from app.core.time import get_current_time
 import asyncio
 import os
 import time
@@ -31,7 +32,7 @@ class IngestionState(TypedDict):
     total_chunks_count: int
     
 def _timestamped_log(message: str) -> str:
-    timestamp = datetime.now(timezone.utc).strftime("%H:%M:%S")
+    timestamp = get_current_time().strftime("%H:%M:%S")
     return f"[{timestamp}] {message}"
 
 def check_cancellation(state: IngestionState):

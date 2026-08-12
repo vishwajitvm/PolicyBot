@@ -1,3 +1,4 @@
+from app.core.time import get_current_time
 from tracenest import logger
 import asyncio
 import time
@@ -56,12 +57,12 @@ class IngestionService:
 
     def _timestamped_log(self, message: str) -> str:
         """Create a timestamped log message."""
-        timestamp = datetime.now(timezone.utc).strftime("%H:%M:%S")
+        timestamp = get_current_time().strftime("%H:%M:%S")
         return f"[{timestamp}] {message}"
 
     async def _update_job_progress(self, job_id: str, **kwargs):
         """Update specific fields of an ingestion job."""
-        kwargs["updated_at"] = datetime.now(timezone.utc)
+        kwargs["updated_at"] = get_current_time()
         await self.jobs.upsert_one({"job_id": job_id}, kwargs)
         
         # Notify WebSocket subscribers
@@ -159,7 +160,7 @@ class IngestionService:
                 status="running",
                 phase="discovering",
                 progress_percent=0.0,
-                started_at=datetime.now(timezone.utc),
+                started_at=get_current_time(),
                 logs=job["logs"],
             )
 
@@ -291,7 +292,7 @@ class IngestionService:
                     )
 
             elapsed_seconds = int(time.time() - start_time)
-            finished_at = datetime.now(timezone.utc)
+            finished_at = get_current_time()
             
             # If all failed, mark as failed instead of completed
             final_status = "completed" if processed_documents > 0 or skipped_documents > 0 else "failed"
@@ -318,7 +319,7 @@ class IngestionService:
         except Exception as exc:
             logger.error(f"Failed to create/run ingestion job for source_id {source_id}")
             elapsed_seconds = int(time.time() - start_time)
-            finished_at = datetime.now(timezone.utc)
+            finished_at = get_current_time()
 
             if job is None:
                 job = self.job_service.create(source_id).model_dump()

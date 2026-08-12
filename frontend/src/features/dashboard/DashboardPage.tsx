@@ -194,7 +194,7 @@ export function DashboardPageFeature() {
                 <XAxis dataKey="date" tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={{stroke: 'rgba(255,255,255,0.1)'}} />
                 <YAxis tickFormatter={(val) => `${(val * 100).toFixed(0)}%`} tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={{stroke: 'rgba(255,255,255,0.1)'}} domain={[0, 1]} />
                 <Tooltip 
-                  formatter={(val: number) => [`${(val * 100).toFixed(1)}%`, undefined]}
+                  formatter={(val: number) => [`${(val * 100).toFixed(1)}%`, ""]}
                   contentStyle={{ backgroundColor: 'rgb(var(--panel))', border: '1px solid rgb(var(--border))', borderRadius: '12px', backdropFilter: 'blur(10px)' }}
                 />
                 <Legend wrapperStyle={{paddingTop: '20px'}}/>

@@ -10,6 +10,18 @@ from app.schemas.common import ApiResponse
 router = APIRouter(prefix="/traces")
 
 
+
+
+@router.get("/", response_model=ApiResponse)
+async def list_traces() -> ApiResponse:
+    try:
+        traces = await TraceRepository(mongodb.db()).find_many()
+        # Sort by timestamp descending if present
+        traces.sort(key=lambda t: t.get("timestamp", ""), reverse=True)
+        return ApiResponse(data=traces, message="Traces list retrieved")
+    except Exception as exc:
+        logger.error("Failed to list traces")
+        return ApiResponse(success=False, message=str(exc))
 @router.get("/{trace_id}", response_model=ApiResponse)
 async def get_trace(trace_id: str) -> ApiResponse:
     try:

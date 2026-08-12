@@ -17,7 +17,7 @@ const links = [
   { to: "/sources", label: "Sources", icon: Database },
   { to: "/ingestion", label: "Ingestion", icon: UploadCloud },
   { to: "/chat", label: "Chat", icon: MessageSquare },
-  { to: "/traces/latest", label: "Traces", icon: FileClock },
+  { to: "/traces", label: "Traces", icon: FileClock },
   { to: "/evaluation", label: "Evaluation", icon: BarChart3 },
   { to: "/workflow", label: "Workflow Config", icon: Cpu },
   { to: "/settings", label: "Settings", icon: Settings },

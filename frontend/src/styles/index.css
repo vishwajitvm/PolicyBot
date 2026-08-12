@@ -88,3 +88,7 @@ a {
 .animate-slide-in {
   animation: slide-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+.time-ago {
+  color: #888;
+  font-size: 0.85rem;
+}

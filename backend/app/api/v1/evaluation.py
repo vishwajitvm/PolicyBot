@@ -62,7 +62,7 @@ async def delete_dataset(dataset_id: str) -> ApiResponse:
 @router.get("/datasets", response_model=ApiResponse)
 async def list_datasets() -> ApiResponse:
     try:
-        cursor = mongodb.db()["eval_datasets"].find({}, {"_id": 0}).sort("created_at", -1).limit(100)
+        cursor = mongodb.db()["eval_datasets"].find({}, {"_id": 0}).sort("_id", -1).limit(100)
         return ApiResponse(data=[item async for item in cursor], message="Datasets retrieved")
     except Exception as exc:
         logger.error("Failed to list datasets")
@@ -88,7 +88,7 @@ async def run_evaluation(payload: EvaluationRunCreate, request: Request) -> ApiR
 @router.get("/runs", response_model=ApiResponse)
 async def list_runs() -> ApiResponse:
     try:
-        cursor = mongodb.db()["eval_runs"].find({}, {"_id": 0}).sort("created_at", -1).limit(100)
+        cursor = mongodb.db()["eval_runs"].find({}, {"_id": 0}).sort("_id", -1).limit(100)
         return ApiResponse(data=[item async for item in cursor], message="Evaluation runs retrieved")
     except Exception as exc:
         logger.error("Failed to list evaluation runs")

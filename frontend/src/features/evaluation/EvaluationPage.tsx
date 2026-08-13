@@ -152,7 +152,6 @@ export function EvaluationPageFeature() {
         </div>
       </div>
 
-      {/* Main Content Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <GoldenDatasetTable 
           datasets={datasets} 
@@ -164,7 +163,7 @@ export function EvaluationPageFeature() {
           hasRuns={hasRuns}
         />
         <EvalRunDetails 
-          runs={runs} 
+          runs={activeDatasetId ? runs.filter((r: any) => r.dataset_id === activeDatasetId) : []} 
           isLoading={isLoadingRuns || runSingle.isPending || runAll.isPending} 
           activeDatasetId={activeDatasetId}
         />

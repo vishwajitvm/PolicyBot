@@ -56,9 +56,13 @@ export function EvalRunDetails({ runs, isLoading, activeDatasetId }: { runs: Eva
               </div>
             </div>
           </div>
+        ) : !activeDatasetId ? (
+          <div className="text-sm text-slate-500 italic text-center py-10 bg-black/20 rounded-xl border border-white/5">
+            Select a dataset from the left to view its evaluation runs.
+          </div>
         ) : runs.length === 0 ? (
           <div className="text-sm text-slate-500 italic text-center py-10 bg-black/20 rounded-xl border border-white/5">
-            No evaluations run yet. Click "Run Evaluation" to test the bot.
+            No evaluations run yet for this dataset. Click "Run Evaluation" to test it.
           </div>
         ) : (
           runs.map((run: any, idx: number) => {

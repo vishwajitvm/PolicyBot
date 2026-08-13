@@ -21,13 +21,16 @@ import {
   Line,
   PieChart,
   Pie,
-  Cell
+  Cell,
+  ComposedChart,
+  Scatter
 } from "recharts";
 
 export function DashboardPageFeature() {
   const [daysFilter, setDaysFilter] = useState<number | undefined>(undefined);
   const [providerFilter, setProviderFilter] = useState<string | undefined>(undefined);
   const [isModelsModalOpen, setIsModelsModalOpen] = useState(false);
+  const [analyticsChartType, setAnalyticsChartType] = useState<"bar" | "line" | "area" | "scatter">("area");
 
   const { data: healthData, error: healthError } = useQuery({
     queryKey: ["health"],
@@ -304,7 +307,38 @@ export function DashboardPageFeature() {
 
       {/* Main Analytics Section */}
       <div className="glass-card p-5">
-        <h3 className="font-semibold text-lg mb-6 text-glow">LLM Analytics & Fallback Performance</h3>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+          <h3 className="font-semibold text-lg text-glow">LLM Analytics & Fallback Performance</h3>
+          <div className="flex items-center gap-3 glass-panel p-1.5 rounded-xl border border-white/5 bg-black/20">
+            <label className="text-[11px] text-gray-400 font-bold tracking-wider uppercase px-2">Graph Style:</label>
+            <div className="flex gap-1">
+              <button 
+                onClick={() => setAnalyticsChartType("bar")}
+                className={`px-3 py-1 text-xs rounded-lg transition-all font-semibold ${analyticsChartType === "bar" ? "bg-primary text-black" : "text-gray-400 hover:text-white hover:bg-white/10"}`}
+              >
+                Bar
+              </button>
+              <button 
+                onClick={() => setAnalyticsChartType("area")}
+                className={`px-3 py-1 text-xs rounded-lg transition-all font-semibold ${analyticsChartType === "area" ? "bg-primary text-black" : "text-gray-400 hover:text-white hover:bg-white/10"}`}
+              >
+                Area
+              </button>
+              <button 
+                onClick={() => setAnalyticsChartType("line")}
+                className={`px-3 py-1 text-xs rounded-lg transition-all font-semibold ${analyticsChartType === "line" ? "bg-primary text-black" : "text-gray-400 hover:text-white hover:bg-white/10"}`}
+              >
+                Line
+              </button>
+              <button 
+                onClick={() => setAnalyticsChartType("scatter")}
+                className={`px-3 py-1 text-xs rounded-lg transition-all font-semibold ${analyticsChartType === "scatter" ? "bg-primary text-black" : "text-gray-400 hover:text-white hover:bg-white/10"}`}
+              >
+                Scatter
+              </button>
+            </div>
+          </div>
+        </div>
         <div className={`grid gap-8 ${providerFilter ? 'lg:grid-cols-2' : 'lg:grid-cols-1'}`}>
           
           <div className="relative group">
@@ -319,7 +353,7 @@ export function DashboardPageFeature() {
             </div>
             <div className="relative w-full glass-panel p-4" style={{ height: `${xAxisHeight + 300}px` }}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 10, right: 20, left: 10, bottom: 10 }}>
+                <ComposedChart data={chartData} margin={{ top: 10, right: 20, left: 10, bottom: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.1)" />
                   <XAxis dataKey="name" height={xAxisHeight} tick={{fill: '#ffffff', fontSize: 13, fontWeight: 700}} axisLine={{stroke: 'rgba(255,255,255,0.2)'}} angle={-35} textAnchor="end" interval={0} tickMargin={12} />
                   <YAxis tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={{stroke: 'rgba(255,255,255,0.1)'}} />
@@ -330,14 +364,17 @@ export function DashboardPageFeature() {
                     labelStyle={{ color: '#fff', fontWeight: 600, fontSize: 12 }}
                   />
                   <Legend verticalAlign="top" wrapperStyle={{paddingBottom: '10px', fontSize: '12px'}}/>
-                  <Bar dataKey="tokens" fill="url(#colorTokens)" radius={[4, 4, 0, 0]} name="Total Tokens" />
+                  {analyticsChartType === "bar" && <Bar dataKey="tokens" fill="url(#colorTokens)" radius={[4, 4, 0, 0]} name="Total Tokens" />}
+                  {analyticsChartType === "area" && <Area type="monotone" dataKey="tokens" fill="url(#colorTokens)" stroke="#00dcc8" strokeWidth={2} name="Total Tokens" />}
+                  {analyticsChartType === "line" && <Line type="monotone" dataKey="tokens" stroke="#00dcc8" strokeWidth={3} dot={{ r: 4, fill: '#00dcc8' }} activeDot={{ r: 6 }} name="Total Tokens" />}
+                  {analyticsChartType === "scatter" && <Scatter dataKey="tokens" fill="#00dcc8" name="Total Tokens" />}
                   <defs>
                     <linearGradient id="colorTokens" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#00dcc8" stopOpacity={0.8}/>
                       <stop offset="95%" stopColor="#00dcc8" stopOpacity={0.2}/>
                     </linearGradient>
                   </defs>
-                </BarChart>
+                </ComposedChart>
               </ResponsiveContainer>
             </div>
           </div>
@@ -354,7 +391,7 @@ export function DashboardPageFeature() {
             </div>
             <div className="relative w-full glass-panel p-4" style={{ height: `${xAxisHeight + 300}px` }}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 10, right: 20, left: 10, bottom: 10 }}>
+                <ComposedChart data={chartData} margin={{ top: 10, right: 20, left: 10, bottom: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.1)" />
                   <XAxis dataKey="name" height={xAxisHeight} tick={{fill: '#ffffff', fontSize: 13, fontWeight: 700}} axisLine={{stroke: 'rgba(255,255,255,0.2)'}} angle={-35} textAnchor="end" interval={0} tickMargin={12} />
                   <YAxis yAxisId="left" tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={{stroke: 'rgba(255,255,255,0.1)'}} />
@@ -365,8 +402,32 @@ export function DashboardPageFeature() {
                     labelStyle={{ color: '#fff', fontWeight: 600, fontSize: 12 }}
                   />
                   <Legend verticalAlign="top" wrapperStyle={{paddingBottom: '10px', fontSize: '12px'}}/>
-                  <Bar yAxisId="left" dataKey="latency" fill="url(#colorLatency)" radius={[4, 4, 0, 0]} name="Latency (ms)" />
-                  <Bar yAxisId="right" dataKey="errors" fill="url(#colorErrors)" radius={[4, 4, 0, 0]} name="Error Count" />
+                  
+                  {analyticsChartType === "bar" && (
+                    <>
+                      <Bar yAxisId="left" dataKey="latency" fill="url(#colorLatency)" radius={[4, 4, 0, 0]} name="Latency (ms)" />
+                      <Bar yAxisId="right" dataKey="errors" fill="url(#colorErrors)" radius={[4, 4, 0, 0]} name="Error Count" />
+                    </>
+                  )}
+                  {analyticsChartType === "area" && (
+                    <>
+                      <Area yAxisId="left" type="monotone" dataKey="latency" fill="url(#colorLatency)" stroke="#b464ff" strokeWidth={2} name="Latency (ms)" />
+                      <Area yAxisId="right" type="monotone" dataKey="errors" fill="url(#colorErrors)" stroke="#ff4444" strokeWidth={2} name="Error Count" />
+                    </>
+                  )}
+                  {analyticsChartType === "line" && (
+                    <>
+                      <Line yAxisId="left" type="monotone" dataKey="latency" stroke="#b464ff" strokeWidth={3} dot={{ r: 4, fill: '#b464ff' }} activeDot={{ r: 6 }} name="Latency (ms)" />
+                      <Line yAxisId="right" type="monotone" dataKey="errors" stroke="#ff4444" strokeWidth={3} dot={{ r: 4, fill: '#ff4444' }} activeDot={{ r: 6 }} name="Error Count" />
+                    </>
+                  )}
+                  {analyticsChartType === "scatter" && (
+                    <>
+                      <Scatter yAxisId="left" dataKey="latency" fill="#b464ff" name="Latency (ms)" />
+                      <Scatter yAxisId="right" dataKey="errors" fill="#ff4444" name="Error Count" />
+                    </>
+                  )}
+
                   <defs>
                     <linearGradient id="colorLatency" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#b464ff" stopOpacity={0.8}/>
@@ -377,7 +438,7 @@ export function DashboardPageFeature() {
                       <stop offset="95%" stopColor="#ff4444" stopOpacity={0.2}/>
                     </linearGradient>
                   </defs>
-                </BarChart>
+                </ComposedChart>
               </ResponsiveContainer>
             </div>
           </div>

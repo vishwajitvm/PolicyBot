@@ -21,7 +21,7 @@ const links = [
   { to: "/evaluation", label: "Evaluation", icon: BarChart3 },
   { to: "/workflow", label: "Workflow Config", icon: Cpu },
   { to: "/settings", label: "Settings", icon: Settings },
-  { to: "/logs", label: "Logs", icon: Bot },
+  // { to: "/logs", label: "Logs", icon: Bot },
   { to: "/models", label: "Models & Config", icon: Database },
 ];
 

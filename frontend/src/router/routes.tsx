@@ -8,7 +8,10 @@ import { LogsPage } from "../pages/LogsPage";
 import { SettingsPage } from "../pages/SettingsPage";
 import { SourcesPage } from "../pages/SourcesPage";
 import { TracePage } from "../pages/TracePage";
+import { ModelManagerPage } from "../pages/ModelManagerPage";
 
+import { WorkflowConfigPage } from "../pages/WorkflowConfigPage";
+import { TraceListPage } from "../pages/TraceListPage";
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -19,10 +22,13 @@ export const router = createBrowserRouter([
       { path: "sources", element: <SourcesPage /> },
       { path: "ingestion", element: <IngestionPage /> },
       { path: "chat", element: <ChatPage /> },
-      { path: "traces/:traceId", element: <TracePage /> },
+      { path: "traces", element: <TraceListPage /> },
+        { path: "traces/:traceId", element: <TracePage /> },
       { path: "evaluation", element: <EvaluationPage /> },
       { path: "settings", element: <SettingsPage /> },
-      { path: "logs", element: <LogsPage /> }
+      { path: "logs", element: <LogsPage /> },
+      { path: "models", element: <ModelManagerPage /> },
+      { path: "workflow", element: <WorkflowConfigPage /> }
     ]
   }
 ]);

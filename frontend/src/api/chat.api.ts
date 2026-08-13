@@ -7,7 +7,7 @@ import type {
   ChatSessionWithMessages,
   ChatMessageCreate,
   ChatMessageOut,
-} from "../schemas/chat.types";
+} from "../schemas/chat";
 
 // Note: We need to create the chat schemas in the frontend as well.
 // We'll create them in a separate file or reuse from the backend? We'll create frontend schemas.

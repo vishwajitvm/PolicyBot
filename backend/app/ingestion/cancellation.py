@@ -8,12 +8,16 @@ def get_cancellation_event(job_id: str) -> asyncio.Event:
         _cancellation_events[job_id] = asyncio.Event()
     return _cancellation_events[job_id]
 
+def init_cancellation_event(job_id: str) -> None:
+    """Pre-initializes the cancellation event for a new job."""
+    if job_id not in _cancellation_events:
+        _cancellation_events[job_id] = asyncio.Event()
+
 def cancel_job(job_id: str) -> bool:
-    """Sets the cancellation flag for a job if it exists."""
-    if job_id in _cancellation_events:
-        _cancellation_events[job_id].set()
-        return True
-    return False
+    """Sets the cancellation flag for a job. Initializes it if it doesn't exist to ensure early cancellation works."""
+    event = get_cancellation_event(job_id)
+    event.set()
+    return True
 
 def clear_cancellation_event(job_id: str):
     """Removes the cancellation event from memory."""

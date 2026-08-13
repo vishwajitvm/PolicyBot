@@ -22,6 +22,8 @@ services:
     container_name: policybot-backend
     env_file:
       - ./backend/.env
+    environment:
+      - WATCHFILES_FORCE_POLLING=true
     ports:
       - "8000:8000"
     volumes:

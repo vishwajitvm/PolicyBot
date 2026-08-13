@@ -270,37 +270,37 @@ export function ChatPageFeature() {
   }, [sessions]);
 
   return (
-    <main className="flex-1 flex flex-col h-full relative overflow-hidden bg-[#0f111a] min-w-0">
+    <main className="flex-1 flex flex-col h-full relative overflow-hidden bg-transparent min-w-0">
       {/* Abstract background elements */}
-      <div className="absolute top-0 left-0 right-0 h-[500px] bg-gradient-to-b from-indigo-500/10 via-purple-500/5 to-transparent pointer-events-none opacity-50"></div>
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-indigo-500/10 blur-[100px] pointer-events-none"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] rounded-full bg-purple-500/10 blur-[100px] pointer-events-none"></div>
+      <div className="absolute top-0 left-0 right-0 h-[500px] bg-gradient-to-b from-primary/10 via-secondary/5 to-transparent pointer-events-none opacity-50"></div>
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-primary/10 blur-[100px] pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] rounded-full bg-secondary/10 blur-[100px] pointer-events-none"></div>
 
       {/* Main chat column */}
       <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="flex shrink-0 items-center justify-between gap-3 border-b border-white/5 bg-background/50 backdrop-blur-xl px-6 py-4 relative z-30">
+        <header className="flex shrink-0 items-center justify-between gap-3 border-b border-border bg-panel/30 backdrop-blur-xl px-6 py-4 relative z-30">
           <div className="flex items-center gap-4">
             <div className="relative group">
               <select
                 value={currentSessionId || ""}
                 onChange={(e) => handleSelectSession(e.target.value)}
-                className="appearance-none bg-white/5 border border-white/10 text-white rounded-lg px-4 py-2 pr-10 hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer min-w-[280px]"
+                className="appearance-none bg-panel/50 border border-border text-text rounded-lg px-4 py-2 pr-10 hover:bg-panel/80 transition-colors focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[280px]"
               >
-                <option value="" disabled className="bg-gray-900 text-gray-500">Select Chat History...</option>
+                <option value="" disabled className="bg-panel text-muted">Select Chat History...</option>
                 {sortedSessions.map((session) => (
-                  <option key={session.id} value={session.id} className="bg-gray-900 text-white">
+                  <option key={session.id} value={session.id} className="bg-panel text-text">
                     {session.title || "Untitled Chat"} - {formatDate(session.updated_at || session.created_at)}
                   </option>
                 ))}
               </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-white/50">
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-muted">
                 <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
               </div>
             </div>
             <Button
               onClick={handleNewChat}
               disabled={createSessionMutation.isPending}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white border-0 shadow-lg shadow-indigo-500/20 transition-all active:scale-95"
+              className="bg-primary/20 hover:bg-primary/30 text-primary border border-primary/50 shadow-[0_0_15px_rgba(0,220,200,0.1)] transition-all active:scale-95"
             >
               {createSessionMutation.isPending ? <Spinner className="mr-2 h-4 w-4" /> : <Plus className="mr-2 h-4 w-4" />}
               New Chat
@@ -309,11 +309,11 @@ export function ChatPageFeature() {
           
           {currentSessionId && currentSession && (
              <div className="flex items-center gap-2">
-               <Button variant="ghost" size="icon" onClick={() => handleRenameSession(currentSessionId, currentSession.title)} className="hover:bg-white/10">
-                 <Pencil className="h-4 w-4 text-white/70" />
+               <Button variant="ghost" size="icon" onClick={() => handleRenameSession(currentSessionId, currentSession.title)} className="hover:bg-white/10 text-text">
+                 <Pencil className="h-4 w-4" />
                </Button>
-               <Button variant="ghost" size="icon" onClick={() => handleDeleteSession(currentSessionId)} className="hover:bg-red-500/20">
-                 <Trash2 className="h-4 w-4 text-red-400" />
+               <Button variant="ghost" size="icon" onClick={() => handleDeleteSession(currentSessionId)} className="hover:bg-red-500/20 text-red-400">
+                 <Trash2 className="h-4 w-4" />
                </Button>
              </div>
           )}
@@ -356,7 +356,7 @@ export function ChatPageFeature() {
                               <div className="mt-3 flex items-center gap-3 text-[11px] text-muted">
                                 {message.created_at && <span>{formatTime(message.created_at)}</span>}
                                 {message.trace_id && (
-                                  <button type="button" onClick={() => handleViewTrace(message.id)} className="inline-flex items-center gap-1 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3 py-1 text-indigo-300 transition-colors hover:bg-indigo-500/30">
+                                  <button type="button" onClick={() => handleViewTrace(message.id)} className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-primary transition-colors hover:bg-primary/30">
                                     <Activity className="h-3 w-3" /> View trace
                                   </button>
                                 )}
@@ -370,8 +370,8 @@ export function ChatPageFeature() {
                   </>
                ) : (
                   <div className="flex flex-col items-center gap-3 py-24 text-center text-muted">
-                    <div className="p-4 rounded-full bg-white/5"><MessageSquare className="h-8 w-8 text-indigo-400" /></div>
-                    <h3 className="text-xl font-medium text-white/80">No messages yet</h3>
+                    <div className="p-4 rounded-full bg-panel border border-border"><MessageSquare className="h-8 w-8 text-primary" /></div>
+                    <h3 className="text-xl font-medium text-text">No messages yet</h3>
                     <p className="text-sm">Ask a question below to get started.</p>
                   </div>
                )

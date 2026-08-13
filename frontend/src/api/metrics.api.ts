@@ -1,0 +1,40 @@
+import { apiClient } from "./client";
+
+export type LlmMetric = {
+  provider: string;
+  model: string;
+  endpoint_type: string;
+  total_requests: number;
+  successful_requests: number;
+  failed_requests: number;
+  error_rate: number;
+  success_rate: number;
+  total_tokens: number;
+  avg_latency_ms: number;
+};
+
+export type TokenTimeseriesData = {
+  date: string;
+  total_requests: number;
+  total_tokens: number;
+  success_rate: number;
+  error_rate: number;
+};
+
+export type MetricsResponse = {
+  metrics: LlmMetric[];
+  timeseries?: TokenTimeseriesData[];
+};
+
+export const getMetrics = (days_filter?: number, provider_filter?: string) => {
+  const params = new URLSearchParams();
+  if (days_filter !== undefined) {
+    params.append('days_filter', days_filter.toString());
+  }
+  if (provider_filter) {
+    params.append('provider_filter', provider_filter);
+  }
+  
+  const query = params.toString() ? `?${params.toString()}` : "";
+  return apiClient<MetricsResponse>(`/metrics${query}`);
+};

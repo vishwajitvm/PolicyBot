@@ -8,18 +8,23 @@ from app.providers.base_llm import BaseLLMProvider, LLMResponse
 
 
 class GeminiProvider(BaseLLMProvider, BaseEmbeddingProvider):
-    provider = "gemini"
+    provider_name = "gemini"
 
     def __init__(self, settings: Settings):
         self.settings = settings
+        self.chat_model = settings.gemini_chat_model
+        self.embedding_model = settings.gemini_embedding_model
+        
         if not settings.gemini_api_key:
             raise NotConfiguredError("GEMINI_API_KEY is required for Gemini provider")
         try:
-            import google.generativeai as genai
+            from google import genai
+            from google.genai import types
         except ImportError as exc:
-            raise NotConfiguredError("google-generativeai package is not installed") from exc
-        genai.configure(api_key=settings.gemini_api_key)
-        self._genai = genai
+            raise NotConfiguredError("google-genai package is not installed") from exc
+        
+        self.client = genai.Client(api_key=settings.gemini_api_key)
+        self.types = types
 
     async def generate(
         self,
@@ -28,44 +33,53 @@ class GeminiProvider(BaseLLMProvider, BaseEmbeddingProvider):
         temperature: float = 0.2,
     ) -> LLMResponse:
         started = time.perf_counter()
-        model = self._genai.GenerativeModel(
-            self.settings.gemini_chat_model,
+        
+        config = self.types.GenerateContentConfig(
+            temperature=temperature,
             system_instruction=system_prompt,
-            generation_config={"temperature": temperature},
         )
-        response = await asyncio.to_thread(model.generate_content, prompt)
+        
+        response = await self.client.aio.models.generate_content(
+            model=self.settings.gemini_chat_model,
+            contents=prompt,
+            config=config,
+        )
+        
         latency_ms = int((time.perf_counter() - started) * 1000)
         return LLMResponse(
-            text=getattr(response, "text", "") or "",
+            text=response.text or "",
             model=self.settings.gemini_chat_model,
             provider=self.provider,
             latency_ms=latency_ms,
-            raw={"finish_reason": str(getattr(response, "prompt_feedback", ""))},
+            raw={},
         )
 
     async def embed_texts(self, texts: list[str]) -> list[list[float]]:
         # Use batching natively supported by the Gemini SDK
-        for attempt in range(5):
+        for attempt in range(4):
             try:
-                result = await asyncio.to_thread(
-                    self._genai.embed_content,
+                response = await self.client.aio.models.embed_content(
                     model=self.settings.gemini_embedding_model,
-                    content=texts,
-                    task_type="retrieval_document",
+                    contents=texts,
+                    config=self.types.EmbedContentConfig(
+                        task_type="RETRIEVAL_DOCUMENT",
+                        output_dimensionality=self.settings.qdrant_vector_size if hasattr(self.settings, "qdrant_vector_size") else None
+                    )
                 )
-                # The result["embedding"] is a list of embeddings when content is a list
-                return result["embedding"]
+                return [emb.values for emb in response.embeddings]
             except Exception as e:
-                if "429" in str(e) and attempt < 4:
-                    await asyncio.sleep(30)
+                if "429" in str(e) and attempt < 3:
+                    await asyncio.sleep(2 ** attempt)
                 else:
                     raise e
 
     async def embed_query(self, query: str) -> list[float]:
-        result = await asyncio.to_thread(
-            self._genai.embed_content,
+        response = await self.client.aio.models.embed_content(
             model=self.settings.gemini_embedding_model,
-            content=query,
-            task_type="retrieval_query",
+            contents=query,
+            config=self.types.EmbedContentConfig(
+                task_type="RETRIEVAL_QUERY",
+                output_dimensionality=self.settings.qdrant_vector_size if hasattr(self.settings, "qdrant_vector_size") else None
+            )
         )
-        return result["embedding"]
+        return response.embeddings[0].values

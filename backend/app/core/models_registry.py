@@ -1,0 +1,56 @@
+AVAILABLE_MODELS = {
+    "gemini": [
+        {"id": "gemini-1.5-flash", "name": "Gemini 1.5 Flash", "type": "chat"},
+        {"id": "gemini-1.5-pro", "name": "Gemini 1.5 Pro", "type": "chat"},
+        {"id": "gemini-2.0-flash", "name": "Gemini 2.0 Flash", "type": "chat"},
+        {"id": "gemini-2.0-flash-lite", "name": "Gemini 2.0 Flash Lite", "type": "chat"},
+        {"id": "text-embedding-004", "name": "Text Embedding 004", "type": "embedding"},
+        {"id": "gemini-embedding-2", "name": "Gemini Embedding 2", "type": "embedding"},
+    ],
+    "openai": [
+        {"id": "o3-mini", "name": "O3 Mini", "type": "chat"},
+        {"id": "gpt-4o-mini", "name": "GPT-4o Mini", "type": "chat"},
+        {"id": "gpt-4o", "name": "GPT-4o", "type": "chat"},
+        {"id": "gpt-3.5-turbo", "name": "GPT-3.5 Turbo", "type": "chat"},
+        {"id": "text-embedding-3-small", "name": "Embedding 3 Small", "type": "embedding"},
+        {"id": "text-embedding-3-large", "name": "Embedding 3 Large", "type": "embedding"},
+    ],
+    "groq": [
+        {"id": "deepseek-r1-distill-llama-70b", "name": "DeepSeek R1 (70B)", "type": "chat"},
+        {"id": "llama-3.3-70b-versatile", "name": "Llama 3.3 70B", "type": "chat"},
+        {"id": "llama-3.1-8b-instant", "name": "Llama 3.1 8B", "type": "chat"},
+        {"id": "gemma2-9b-it", "name": "Gemma 2 9B", "type": "chat"},
+    ],
+    "nvidia": [
+        {"id": "meta/llama-3.1-70b-instruct", "name": "Llama 3.1 70B Instruct", "type": "chat"},
+        {"id": "meta/llama-3.1-8b-instruct", "name": "Llama 3.1 8B Instruct", "type": "chat"},
+        {"id": "mistralai/mixtral-8x22b-instruct-v0.1", "name": "Mixtral 8x22B", "type": "chat"},
+        {"id": "nvidia/nemotron-4-340b-instruct", "name": "Nemotron 4 340B", "type": "chat"},
+    ],
+    "mistral": [
+        {"id": "mistral-small-latest", "name": "Mistral Small", "type": "chat"},
+        {"id": "mistral-medium-latest", "name": "Mistral Medium", "type": "chat"},
+        {"id": "mistral-large-latest", "name": "Mistral Large", "type": "chat"},
+        {"id": "open-mistral-nemo", "name": "Mistral Nemo", "type": "chat"},
+    ],
+    "deepseek": [
+        {"id": "deepseek-chat", "name": "DeepSeek Chat (V3)", "type": "chat"},
+        {"id": "deepseek-coder", "name": "DeepSeek Coder", "type": "chat"},
+        {"id": "deepseek-reasoner", "name": "DeepSeek Reasoner (R1)", "type": "chat"},
+    ],
+    "huggingface": [
+        {"id": "meta-llama/Llama-3.1-70B-Instruct", "name": "Llama 3.1 70B", "type": "chat"},
+        {"id": "meta-llama/Llama-3.1-8B-Instruct", "name": "Llama 3.1 8B", "type": "chat"},
+        {"id": "mistralai/Mistral-Nemo-Instruct-2407", "name": "Mistral Nemo", "type": "chat"},
+        {"id": "Qwen/Qwen2.5-72B-Instruct", "name": "Qwen 2.5 72B", "type": "chat"},
+        {"id": "microsoft/Phi-3.5-mini-instruct", "name": "Phi 3.5 Mini", "type": "chat"},
+    ],
+    "ollama": [
+        {"id": "llama3.1", "name": "Llama 3.1 8B", "type": "chat"},
+        {"id": "llama3.1:70b", "name": "Llama 3.1 70B", "type": "chat"},
+        {"id": "mistral", "name": "Mistral", "type": "chat"},
+        {"id": "qwen2.5", "name": "Qwen 2.5", "type": "chat"},
+        {"id": "nomic-embed-text", "name": "Nomic Embed Text", "type": "embedding"},
+        {"id": "mxbai-embed-large", "name": "MXBAI Embed Large", "type": "embedding"},
+    ],
+}

@@ -1,3 +1,4 @@
+from app.core.time import get_current_time
 from datetime import datetime
 
 from pydantic import BaseModel, Field
@@ -7,7 +8,7 @@ class EvaluationDataset(BaseModel):
     dataset_id: str
     name: str
     items: list[dict] = []
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=get_current_time)
 
 
 class EvaluationRun(BaseModel):
@@ -17,4 +18,4 @@ class EvaluationRun(BaseModel):
     passed: int = 0
     failed: int = 0
     details: list[dict] = []
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=get_current_time)

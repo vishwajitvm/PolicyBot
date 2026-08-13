@@ -3,5 +3,20 @@ import { Input } from "../../components/ui/Input";
 import { Select } from "../../components/ui/Select";
 
 export function VectorStoreSettings() {
-  return <Card className="space-y-3"><h3 className="font-semibold">Vector Store Settings</h3><Select><option>qdrant</option><option>pinecone</option><option>chroma</option><option>mongodb</option></Select><Input placeholder="Chunk size" type="number" /><Input placeholder="Chunk overlap" type="number" /><Input placeholder="Top-k" type="number" /></Card>;
+  return (
+    <Card className="space-y-4 p-6 glass-card border-border hover:border-primary/20 transition-all bg-panel/30">
+      <h3 className="font-semibold text-lg text-transparent bg-clip-text bg-gradient-to-r from-text to-muted tracking-wider uppercase">Vector Store Settings</h3>
+      <div className="space-y-4">
+        <Select className="w-full bg-panel/50 border-border">
+          <option>qdrant</option>
+          <option>pinecone</option>
+          <option>chroma</option>
+          <option>mongodb</option>
+        </Select>
+        <Input placeholder="Chunk size" type="number" className="bg-panel/50 border-border focus:border-primary" />
+        <Input placeholder="Chunk overlap" type="number" className="bg-panel/50 border-border focus:border-primary" />
+        <Input placeholder="Top-k" type="number" className="bg-panel/50 border-border focus:border-primary" />
+      </div>
+    </Card>
+  );
 }

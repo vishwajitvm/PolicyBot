@@ -1,3 +1,4 @@
+from app.core.time import get_current_time
 from datetime import datetime
 
 
@@ -8,5 +9,5 @@ def log_event(step: str, status: str, input_summary: dict | None = None, output_
         "input_summary": input_summary or {},
         "output_summary": output_summary or {},
         "latency_ms": latency_ms,
-        "timestamp": datetime.utcnow(),
+        "timestamp": get_current_time(),
     }

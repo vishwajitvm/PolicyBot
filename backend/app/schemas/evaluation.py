@@ -6,6 +6,11 @@ class DatasetCreate(BaseModel):
     items: list[dict] = []
 
 
+class DatasetUpdate(BaseModel):
+    name: str
+    items: list[dict] = []
+
+
 class EvaluationRunCreate(BaseModel):
     dataset_id: str
 

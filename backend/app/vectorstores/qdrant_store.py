@@ -18,7 +18,7 @@ class QdrantVectorStore(BaseVectorStore):
         if self.client is None:
             from qdrant_client import AsyncQdrantClient
 
-            self.client = AsyncQdrantClient(url=self.settings.qdrant_url, timeout=5)
+            self.client = AsyncQdrantClient(url=self.settings.qdrant_url, timeout=5, check_compatibility=False)
         return self.client
 
     async def ensure_collection(self) -> None:

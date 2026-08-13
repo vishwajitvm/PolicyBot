@@ -1,3 +1,4 @@
+from app.core.time import get_current_time
 from datetime import datetime
 from typing import List, Optional
 
@@ -27,5 +28,5 @@ class IngestionJob(BaseModel):
     errors: List[str] = []
     logs: List[str] = []
     error: Optional[str] = None  # failure reason
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=get_current_time)
+    updated_at: datetime = Field(default_factory=get_current_time)

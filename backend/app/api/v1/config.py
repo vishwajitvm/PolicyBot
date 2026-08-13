@@ -4,6 +4,13 @@ from fastapi import APIRouter
 from app.core.config import get_settings
 from app.schemas.common import ApiResponse
 from app.schemas.config import ConfigPatch, RuntimeConfig
+from pydantic import BaseModel
+import os
+import re
+
+class ApiKeyUpdate(BaseModel):
+    provider: str
+    key: str
 
 
 router = APIRouter()
@@ -48,3 +55,45 @@ async def patch_config(_: ConfigPatch) -> ApiResponse:
     except Exception as exc:
         logger.error("Failed to patch configuration")
         return ApiResponse(success=False, message=str(exc))
+
+@router.post("/config/keys")
+async def update_keys(body: ApiKeyUpdate):
+    try:
+        env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '.env')
+        
+        # Map provider to env key
+        key_map = {
+            "gemini": "GEMINI_API_KEY",
+            "openai": "OPENAI_API_KEY",
+            "mistral": "MISTRAL_API_KEY",
+            "groq": "GROQ_API_KEY",
+            "deepseek": "DEEPSEEK_API_KEY",
+            "huggingface": "HUGGINGFACE_API_KEY",
+            "nvidia": "NVIDIA_API_KEY"
+        }
+        
+        env_key = key_map.get(body.provider.lower())
+        if not env_key:
+            return ApiResponse(success=False, message="Invalid provider")
+            
+        # Update .env file
+        if os.path.exists(env_path):
+            with open(env_path, 'r') as f:
+                content = f.read()
+                
+            if f"{env_key}=" in content:
+                content = re.sub(rf"{env_key}=.*", f"{env_key}={body.key}", content)
+            else:
+                content += f"\n{env_key}={body.key}\n"
+                
+            with open(env_path, 'w') as f:
+                f.write(content)
+                
+            # Reload settings
+            get_settings.cache_clear()
+            get_settings()
+            
+        return {"success": True}
+    except Exception as exc:
+        logger.error(f"Failed to update API key: {exc}")
+        return {"success": False, "message": str(exc)}

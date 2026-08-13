@@ -22,8 +22,8 @@ export function ChatInput({ onAsk, pending }: { onAsk: (question: string) => voi
 
   return (
     <form onSubmit={submit} className="relative flex w-full max-w-4xl mx-auto items-center">
-      <div className="relative w-full group flex items-center bg-[#1c1f2e] border border-white/5 rounded-2xl p-2">
-        <button type="button" className="p-3 text-white/50 hover:text-white/80 transition-colors">
+      <div className="relative w-full group flex items-center bg-panel border border-border rounded-2xl p-2">
+        <button type="button" className="p-3 text-muted hover:text-text transition-colors">
           <Paperclip size={20} />
         </button>
         
@@ -32,14 +32,14 @@ export function ChatInput({ onAsk, pending }: { onAsk: (question: string) => voi
           value={question}
           onChange={(event) => setQuestion(event.target.value)}
           placeholder="Ask anything about your policy documents..."
-          className="flex-1 bg-transparent px-2 py-2 text-sm text-white/90 placeholder:text-white/40 focus:outline-none"
+          className="flex-1 bg-transparent px-2 py-2 text-sm text-text placeholder:text-muted focus:outline-none"
           disabled={pending}
         />
         
         <Button
           type="submit"
           disabled={pending || !question.trim()}
-          className="rounded-xl bg-[#3bd59b] hover:bg-[#32b885] text-black font-semibold px-6 py-2 transition-transform hover:scale-105 active:scale-95 disabled:hover:scale-100 flex items-center gap-2"
+          className="rounded-xl bg-primary hover:bg-primary/80 text-white font-semibold px-6 py-2 transition-transform hover:scale-105 active:scale-95 disabled:hover:scale-100 flex items-center gap-2"
         >
           {pending ? (
             <span>Thinking...</span>

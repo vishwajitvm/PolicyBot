@@ -1,3 +1,4 @@
+from app.core.time import get_current_time
 from tracenest import logger
 import asyncio
 import time
@@ -25,6 +26,7 @@ from app.models.ingestion_job import IngestionJob
 from app.providers.base_embedding import BaseEmbeddingProvider
 from app.vectorstores.base_vector_store import BaseVectorStore, VectorChunk
 from app.websocket_manager import manager
+from app.ingestion.langgraph_workflow import create_ingestion_graph
 
 
 class IngestionService:
@@ -46,9 +48,8 @@ class IngestionService:
         self.loader = DocumentLoader()
         self.hasher = HashService()
         self.metadata = MetadataExtractor()
-        self.chunker = ChunkingService(settings.chunk_size if hasattr(settings, 'chunk_size') and settings.chunk_size else 4000, 
-                                       settings.chunk_overlap if hasattr(settings, 'chunk_overlap') and settings.chunk_overlap else 500)
         self.job_service = IngestionJobService()
+        self.workflow = create_ingestion_graph(self.embedding_provider, self.vector_store)
         logger.info(
             f"IngestionService initialized with embedding provider: {type(embedding_provider).__name__} "
             f"and vector store: {type(vector_store).__name__}"
@@ -56,12 +57,12 @@ class IngestionService:
 
     def _timestamped_log(self, message: str) -> str:
         """Create a timestamped log message."""
-        timestamp = datetime.now(timezone.utc).strftime("%H:%M:%S")
+        timestamp = get_current_time().strftime("%H:%M:%S")
         return f"[{timestamp}] {message}"
 
     async def _update_job_progress(self, job_id: str, **kwargs):
         """Update specific fields of an ingestion job."""
-        kwargs["updated_at"] = datetime.now(timezone.utc)
+        kwargs["updated_at"] = get_current_time()
         await self.jobs.upsert_one({"job_id": job_id}, kwargs)
         
         # Notify WebSocket subscribers
@@ -133,7 +134,7 @@ class IngestionService:
             logger.error(f"Batch embedding/indexing failed: {e}")
             raise e
 
-    async def run_for_source(self, source_id: str) -> dict:
+    async def run_for_source(self, source_id: str, job_id: str = None) -> dict:
         job = None
         start_time = time.time()
         try:
@@ -141,20 +142,25 @@ class IngestionService:
             if not source:
                 raise ValueError(f"Unknown source_id {source_id}")
 
-            # Create job
-            job = self.job_service.create(source_id).model_dump()
-            job["source_name"] = source.get("name")
-            job["status"] = "queued"
-            job["phase"] = "queued"
-            job["logs"] = [self._timestamped_log("Ingestion started")]
-            await self.jobs.insert_one(job)
+            if job_id:
+                job = await self.jobs.find_one({"job_id": job_id})
+                if not job:
+                    raise ValueError(f"Unknown job_id {job_id}")
+            else:
+                # Create job
+                job = self.job_service.create(source_id).model_dump()
+                job["source_name"] = source.get("name")
+                job["status"] = "queued"
+                job["phase"] = "queued"
+                job["logs"] = [self._timestamped_log("Ingestion started")]
+                await self.jobs.insert_one(job)
 
             await self._update_job_progress(
                 job["job_id"],
                 status="running",
                 phase="discovering",
                 progress_percent=0.0,
-                started_at=datetime.now(timezone.utc),
+                started_at=get_current_time(),
                 logs=job["logs"],
             )
 
@@ -214,52 +220,37 @@ class IngestionService:
                     await self.documents.upsert_one({"document_id": document_id}, document)
                     await self.versions.insert_one({**document, "document_version_id": str(uuid4())})
 
-                    # Async lazy loading and smart chunking
-                    document_chunk_count = 0
-                    batch = []
-                    batch_size = 50  # Process chunks in batches of 50 for optimal performance
+                    # Run LangGraph Workflow for the document
+                    initial_state = {
+                        "job_id": job["job_id"],
+                        "file_path": str(item.path),
+                        "file_name": current_file_name,
+                        "source_id": source_id,
+                        "document_id": document_id,
+                        "chunks": [],
+                        "embedded_vectors": [],
+                        "error": None,
+                        "logs": [],
+                        "total_documents": total_documents,
+                        "processed_documents": processed_documents,
+                        "embedded_chunks_count": 0,
+                        "total_chunks_count": 0
+                    }
                     
-                    async for text_part in self.loader.load_chunks(item.path):
-                        if not text_part.strip():
-                            continue
-                            
-                        # Chunking dynamically per text part
-                        chunks = self.chunker.split(text_part, file_path=str(item.path))
+                    final_state = await self.workflow.ainvoke(initial_state)
+                    
+                    if final_state.get("error"):
+                        raise Exception(final_state["error"])
                         
-                        for chunk in chunks:
-                            # Re-index across the whole document
-                            chunk.index = document_chunk_count
-                            batch.append(chunk)
-                            document_chunk_count += 1
-                            
-                            if get_cancellation_event(job["job_id"]).is_set():
-                                raise asyncio.CancelledError("Job cancelled by user")
-                                
-                            if len(batch) >= batch_size:
-                                await self._update_job_progress(
-                                    job["job_id"],
-                                    phase="embedding",
-                                    logs=[*logs, self._timestamped_log(f"Processing batch of {len(batch)} chunks for {current_file_name}")]
-                                )
-                                processed = await self._embed_and_index_batch(batch, document_id, source_id, metadata, job["job_id"], logs)
-                                embedded_chunks += processed
-                                indexed_chunks += processed
-                                total_chunks += processed
-                                batch = []
-                                
-                    # Process remaining batch
-                    if batch:
-                        await self._update_job_progress(
-                            job["job_id"],
-                            phase="embedding",
-                            logs=[*logs, self._timestamped_log(f"Processing final batch of {len(batch)} chunks for {current_file_name}")]
-                        )
-                        processed = await self._embed_and_index_batch(batch, document_id, source_id, metadata, job["job_id"], logs)
-                        embedded_chunks += processed
-                        indexed_chunks += processed
-                        total_chunks += processed
+                    processed_total = final_state.get("embedded_chunks_count", 0)
+                    embedded_chunks += processed_total
+                    indexed_chunks += processed_total
+                    total_chunks += final_state.get("total_chunks_count", 0)
+                    
+                    if final_state.get("logs"):
+                        logs.extend(final_state["logs"])
 
-                    logs = [*logs, self._timestamped_log(f"Successfully processed {current_file_name} ({document_chunk_count} chunks)")]
+                    logs = [*logs, self._timestamped_log(f"Successfully processed {current_file_name} with LangGraph")]
                     processed_documents += 1
 
                     overall_progress = 5.0 + (((processed_documents + skipped_documents) / total_documents) * 95.0)
@@ -301,7 +292,7 @@ class IngestionService:
                     )
 
             elapsed_seconds = int(time.time() - start_time)
-            finished_at = datetime.now(timezone.utc)
+            finished_at = get_current_time()
             
             # If all failed, mark as failed instead of completed
             final_status = "completed" if processed_documents > 0 or skipped_documents > 0 else "failed"
@@ -328,7 +319,7 @@ class IngestionService:
         except Exception as exc:
             logger.error(f"Failed to create/run ingestion job for source_id {source_id}")
             elapsed_seconds = int(time.time() - start_time)
-            finished_at = datetime.now(timezone.utc)
+            finished_at = get_current_time()
 
             if job is None:
                 job = self.job_service.create(source_id).model_dump()

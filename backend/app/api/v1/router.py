@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1 import config, evaluation, google_drive, health, ingestion, logs, query, sources, traces, chat
+from app.api.v1 import config, evaluation, google_drive, health, ingestion, logs, query, sources, traces, chat, metrics, models, dashboard, workflow
 
 api_router = APIRouter()
 api_router.include_router(health.router)
@@ -13,3 +13,7 @@ api_router.include_router(evaluation.router)
 api_router.include_router(google_drive.router)
 api_router.include_router(logs.router)
 api_router.include_router(chat.router)
+api_router.include_router(metrics.router)
+api_router.include_router(models.router)
+api_router.include_router(dashboard.router)
+api_router.include_router(workflow.router, prefix="/workflow")

@@ -162,8 +162,10 @@ export function IngestionPageFeature() {
     wsConnectionsRef.current.set(jobId, ws);
   };
 
-  // Get the latest jobs array for rendering
-  const jobsArray = Array.from(jobsMapRef.current.values());
+  // Get the latest jobs array for rendering, sorted newest first
+  const jobsArray = Array.from(jobsMapRef.current.values()).sort(
+    (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+  );
 
   // Auto-select the latest running job if nothing is manually selected
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);

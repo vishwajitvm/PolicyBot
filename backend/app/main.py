@@ -5,6 +5,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.router import api_router
+from app.api.v1 import (
+    chat,
+    sources,
+    ingestion,
+    metrics,
+    dashboard,
+    workflow
+)
 from app.core.config import get_settings
 from app.core.exceptions import PolicyBotError, policybot_exception_handler, unhandled_exception_handler
 from app.core.logging import configure_logging

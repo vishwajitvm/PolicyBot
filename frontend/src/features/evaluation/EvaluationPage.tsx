@@ -93,66 +93,68 @@ export function EvaluationPageFeature() {
   const hasRuns = (datasetId: string) => runs.some((r: any) => r.dataset_id === datasetId);
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-10">
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-2xl bg-gradient-to-r from-blue-900/20 via-indigo-900/10 to-transparent border border-white/5">
-        <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2 mb-2">
-            <Activity className="w-6 h-6 text-blue-400" />
-            AI Evaluation Engine
-          </h1>
-          <p className="text-sm text-slate-400 max-w-2xl">
-            Automatically test and grade your AI against verified Golden Datasets. Ensure accuracy stays high as your knowledge base scales and models change.
-          </p>
+    <div className="flex flex-col h-full max-w-7xl mx-auto">
+      <div className="shrink-0 space-y-6">
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-2xl bg-gradient-to-r from-blue-900/20 via-indigo-900/10 to-transparent border border-white/5">
+          <div>
+            <h1 className="text-2xl font-bold text-white flex items-center gap-2 mb-2">
+              <Activity className="w-6 h-6 text-blue-400" />
+              AI Evaluation Engine
+            </h1>
+            <p className="text-sm text-slate-400 max-w-2xl">
+              Automatically test and grade your AI against verified Golden Datasets. Ensure accuracy stays high as your knowledge base scales and models change.
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <Button 
+              variant="outline"
+              className="flex items-center gap-2 border-white/10 hover:bg-white/5"
+              onClick={() => { setEditingDataset(null); setIsCreateModalOpen(true); }}
+              disabled={create.isPending || update.isPending}
+            >
+              <Plus className="w-4 h-4" />
+              Create Dataset
+            </Button>
+            <Button 
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white"
+              onClick={() => runAll.mutate()} 
+              disabled={!datasets.length || runAll.isPending}
+            >
+              <Play className="w-4 h-4" />
+              {runAll.isPending ? "Running All..." : "Run Master Evaluation"}
+            </Button>
+          </div>
         </div>
-        
-        <div className="flex items-center gap-3">
-          <Button 
-            variant="outline"
-            className="flex items-center gap-2 border-white/10 hover:bg-white/5"
-            onClick={() => { setEditingDataset(null); setIsCreateModalOpen(true); }}
-            disabled={create.isPending || update.isPending}
-          >
-            <Plus className="w-4 h-4" />
-            Create Dataset
-          </Button>
-          <Button 
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white"
-            onClick={() => runAll.mutate()} 
-            disabled={!datasets.length || runAll.isPending}
-          >
-            <Play className="w-4 h-4" />
-            {runAll.isPending ? "Running All..." : "Run Master Evaluation"}
-          </Button>
+
+        {/* Stats Board */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-black/20 border border-white/5 p-4 rounded-xl flex items-center gap-4">
+            <div className="bg-blue-500/10 p-3 rounded-lg"><Database className="w-6 h-6 text-blue-400" /></div>
+            <div>
+              <div className="text-sm text-slate-400 font-medium">Total Datasets</div>
+              <div className="text-2xl font-bold text-white">{totalDatasets}</div>
+            </div>
+          </div>
+          <div className="bg-black/20 border border-white/5 p-4 rounded-xl flex items-center gap-4">
+            <div className="bg-emerald-500/10 p-3 rounded-lg"><Activity className="w-6 h-6 text-emerald-400" /></div>
+            <div>
+              <div className="text-sm text-slate-400 font-medium">Total Runs</div>
+              <div className="text-2xl font-bold text-white">{totalRuns}</div>
+            </div>
+          </div>
+          <div className="bg-black/20 border border-white/5 p-4 rounded-xl flex items-center gap-4">
+            <div className="bg-indigo-500/10 p-3 rounded-lg"><BarChart3 className="w-6 h-6 text-indigo-400" /></div>
+            <div>
+              <div className="text-sm text-slate-400 font-medium">Avg Accuracy</div>
+              <div className="text-2xl font-bold text-white">{avgAccuracy.toFixed(1)}%</div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Stats Board */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-black/20 border border-white/5 p-4 rounded-xl flex items-center gap-4">
-          <div className="bg-blue-500/10 p-3 rounded-lg"><Database className="w-6 h-6 text-blue-400" /></div>
-          <div>
-            <div className="text-sm text-slate-400 font-medium">Total Datasets</div>
-            <div className="text-2xl font-bold text-white">{totalDatasets}</div>
-          </div>
-        </div>
-        <div className="bg-black/20 border border-white/5 p-4 rounded-xl flex items-center gap-4">
-          <div className="bg-emerald-500/10 p-3 rounded-lg"><Activity className="w-6 h-6 text-emerald-400" /></div>
-          <div>
-            <div className="text-sm text-slate-400 font-medium">Total Runs</div>
-            <div className="text-2xl font-bold text-white">{totalRuns}</div>
-          </div>
-        </div>
-        <div className="bg-black/20 border border-white/5 p-4 rounded-xl flex items-center gap-4">
-          <div className="bg-indigo-500/10 p-3 rounded-lg"><BarChart3 className="w-6 h-6 text-indigo-400" /></div>
-          <div>
-            <div className="text-sm text-slate-400 font-medium">Avg Accuracy</div>
-            <div className="text-2xl font-bold text-white">{avgAccuracy.toFixed(1)}%</div>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      <div className="flex-1 min-h-0 grid grid-cols-1 xl:grid-cols-2 gap-6 mt-6 pb-6">
         <GoldenDatasetTable 
           datasets={datasets} 
           isLoading={isLoadingDatasets || remove.isPending} 

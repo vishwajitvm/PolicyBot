@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { Activity, Database } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getHealth } from "../../api/health.api";
 import { getDashboardStats } from "../../api/dashboard.api";
 import { getMetrics } from "../../api/metrics.api";
+import { listDatasets, listRuns } from "../../api/evaluation.api";
 import { DashboardCards } from "./DashboardCards";
 import {
   BarChart,
@@ -16,7 +18,10 @@ import {
   AreaChart,
   Area,
   LineChart,
-  Line
+  Line,
+  PieChart,
+  Pie,
+  Cell
 } from "recharts";
 
 export function DashboardPageFeature() {
@@ -48,6 +53,37 @@ export function DashboardPageFeature() {
     queryFn: () => getMetrics(daysFilter, providerFilter),
     retry: false
   });
+
+  const { data: datasets = [] } = useQuery({ 
+    queryKey: ["datasets"], 
+    queryFn: listDatasets, 
+    retry: false 
+  });
+  
+  const { data: runs = [] } = useQuery({ 
+    queryKey: ["eval-runs"], 
+    queryFn: listRuns, 
+    retry: false 
+  });
+
+  // Calculate Dataset Insights
+  const datasetInsights = datasets.map((ds: any) => {
+    const dsRuns = runs.filter((r: any) => r.dataset_id === ds.dataset_id);
+    const latestRun = dsRuns.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+    return {
+      name: ds.name,
+      total_items: ds.items?.length || 0,
+      passed: latestRun ? latestRun.passed : 0,
+      failed: latestRun ? latestRun.failed : 0,
+      hasRun: !!latestRun
+    };
+  }).filter(ds => ds.hasRun);
+
+  const aggregateGoldenStats = datasetInsights.map(ds => ({
+    name: ds.name,
+    Passed: ds.passed,
+    Failed: ds.failed
+  }));
 
   // Extract unique LLM providers for the dropdown
   const uniqueProviders = Array.from(
@@ -458,6 +494,114 @@ export function DashboardPageFeature() {
               )}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* Golden Dataset Evaluation Overview */}
+      <div className="glass-card p-6 relative overflow-hidden group">
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-purple-500/5 pointer-events-none"></div>
+        <div className="relative z-10">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h3 className="font-bold text-2xl text-white flex items-center gap-2">
+                Golden Dataset Health
+              </h3>
+              <p className="text-sm text-gray-400 mt-1">Real-time pass/fail metrics from your latest evaluation runs.</p>
+            </div>
+          </div>
+          
+          {datasetInsights.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-gray-500 bg-black/20 rounded-2xl border border-white/5 border-dashed">
+              <Database className="w-12 h-12 mb-4 opacity-20" />
+              <p className="text-lg">No evaluation runs found.</p>
+              <p className="text-sm">Run an evaluation to see insights here.</p>
+            </div>
+          ) : (
+            <div className="grid gap-8 lg:grid-cols-3">
+              {/* Left: Sleek List of Datasets */}
+              <div className="lg:col-span-2 flex flex-col gap-3 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
+                {datasetInsights.map((ds, idx) => {
+                  const total = ds.passed + ds.failed;
+                  const passRate = total > 0 ? Math.round((ds.passed / total) * 100) : 0;
+                  const isPerfect = passRate === 100;
+                  
+                  return (
+                    <div key={idx} className="group/item relative bg-black/30 border border-white/5 rounded-2xl p-5 flex items-center justify-between hover:bg-black/50 hover:border-white/10 transition-all duration-300">
+                      <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl transition-colors duration-300" 
+                           style={{ backgroundColor: isPerfect ? '#4ade80' : (passRate > 50 ? '#facc15' : '#f87171') }}>
+                      </div>
+                      <div className="pl-4">
+                        <h4 className="text-white font-semibold text-lg flex items-center gap-2">
+                          {ds.name}
+                          {isPerfect && <span className="flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/20"><Activity className="w-3 h-3" /> Perfect</span>}
+                        </h4>
+                        <p className="text-sm text-gray-400 mt-1 flex items-center gap-4">
+                          <span>{ds.total_items} Test Cases</span>
+                          <span className="flex items-center gap-1 text-emerald-400"><div className="w-1.5 h-1.5 rounded-full bg-emerald-400"></div> {ds.passed} Passed</span>
+                          <span className="flex items-center gap-1 text-rose-400"><div className="w-1.5 h-1.5 rounded-full bg-rose-400"></div> {ds.failed} Failed</span>
+                        </p>
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        <div className="text-2xl font-bold text-white tracking-tight">{passRate}%</div>
+                        <div className="w-24 h-1.5 bg-black/50 rounded-full overflow-hidden border border-white/5">
+                          <div className="h-full rounded-full" 
+                               style={{ width: `${passRate}%`, backgroundColor: isPerfect ? '#4ade80' : (passRate > 50 ? '#facc15' : '#f87171') }}>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Right: Aggregate Donut Chart */}
+              <div className="glass-panel p-6 h-[400px] rounded-2xl flex flex-col relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl"></div>
+                <h4 className="text-sm font-bold tracking-widest uppercase text-gray-400 mb-2">Aggregate Results</h4>
+                
+                <div className="flex-1 w-full relative">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={[
+                          { name: 'Passed', value: aggregateGoldenStats.reduce((acc, curr) => acc + curr.Passed, 0) },
+                          { name: 'Failed', value: aggregateGoldenStats.reduce((acc, curr) => acc + curr.Failed, 0) }
+                        ]}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={80}
+                        outerRadius={110}
+                        paddingAngle={5}
+                        dataKey="value"
+                        stroke="none"
+                      >
+                        <Cell fill="#4ade80" />
+                        <Cell fill="#f87171" />
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: 'rgb(var(--panel))', border: '1px solid rgb(var(--border))', borderRadius: '12px', backdropFilter: 'blur(10px)' }}
+                        itemStyle={{ color: '#fff', fontWeight: 'bold' }}
+                        formatter={(value: number) => [value, 'Tests']}
+                      />
+                      <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  {/* Center Text */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mb-8">
+                    <span className="text-4xl font-black text-white">
+                      {(() => {
+                        const pass = aggregateGoldenStats.reduce((acc, curr) => acc + curr.Passed, 0);
+                        const fail = aggregateGoldenStats.reduce((acc, curr) => acc + curr.Failed, 0);
+                        const total = pass + fail;
+                        return total > 0 ? Math.round((pass / total) * 100) : 0;
+                      })()}%
+                    </span>
+                    <span className="text-xs font-semibold text-gray-400 tracking-widest uppercase mt-1">Global Pass Rate</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

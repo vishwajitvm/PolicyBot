@@ -1,4 +1,5 @@
-import { PropsWithChildren } from "react";
+import { PropsWithChildren, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { Button } from "./Button";
 
@@ -8,10 +9,18 @@ export function Modal({
   children,
   className = "w-full max-w-xl"
 }: PropsWithChildren<{ open: boolean; onClose: () => void; className?: string }>) {
-  if (!open) return null;
-  return (
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  if (!open || !mounted) return null;
+
+  return createPortal(
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
       onClick={onClose}
     >
       <div 
@@ -28,10 +37,11 @@ export function Modal({
             <X size={18} />
           </Button>
         </div>
-        <div className="flex-1 overflow-y-auto p-2">
+        <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
           {children}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

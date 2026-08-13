@@ -42,7 +42,7 @@ export function GoldenDatasetTable({ datasets, isLoading, onEdit, onDelete, onRu
         <h3 className="text-lg font-semibold text-white">Golden Datasets</h3>
       </div>
       
-      <div className="flex-1 flex flex-col gap-3 max-h-[800px] overflow-y-auto custom-scrollbar pr-2">
+      <div className="flex-1 min-h-0 flex flex-col gap-3 overflow-y-auto custom-scrollbar pr-2 pb-4">
         {isLoading ? (
           <div className="animate-pulse flex space-x-4">
             <div className="flex-1 space-y-4 py-1">
